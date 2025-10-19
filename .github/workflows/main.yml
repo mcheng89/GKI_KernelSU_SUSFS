@@ -5,6 +5,16 @@ permissions:
   actions: write
 
 on:
+  # push:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - '.github/workflows/**'
+  # pull_request:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - '.github/workflows/**'
   workflow_dispatch:
     inputs:
       release_type:
@@ -16,35 +26,75 @@ on:
           - Pre-Release
           - Release
         default: Actions
+      build_selection:
+        description: "Choose which kernels to build"
+        required: true
+        type: choice
+        options:
+          - All
+          - Android12-5.10
+          - Android13-5.10
+          - Android13-5.15
+          - Android14-5.15
+          - Android14-6.1
+          - Android15-6.6
+        default: All
+      susfs_version:
+        description: "Choose SUSFS version to build"
+        required: true
+        type: choice
+        options:
+          - v1.5.12
+          - v1.5.9
+        default: v1.5.12
 
 jobs:
 
-  # build-a12-5-10:
-  #   uses: ./.github/workflows/kernel-a12-5-10.yml
-  #   secrets: inherit
+  build-a12-5-10:
+    if: inputs.build_selection == 'All' || inputs.build_selection == 'Android12-5.10'
+    uses: ./.github/workflows/kernel-a12-5-10.yml
+    secrets: inherit
+    with:
+      susfs_version: ${{ inputs.susfs_version }}
 
-  # build-a13-5-10:
-  #   uses: ./.github/workflows/kernel-a13-5-10.yml
-  #   secrets: inherit
+  build-a13-5-10:
+    if: inputs.build_selection == 'All' || inputs.build_selection == 'Android13-5.10'
+    uses: ./.github/workflows/kernel-a13-5-10.yml
+    secrets: inherit
+    with:
+      susfs_version: ${{ inputs.susfs_version }}
 
-  # build-a13-5-15:
-  #   uses: ./.github/workflows/kernel-a13-5-15.yml
-  #   secrets: inherit
+  build-a13-5-15:
+    if: inputs.build_selection == 'All' || inputs.build_selection == 'Android13-5.15'
+    uses: ./.github/workflows/kernel-a13-5-15.yml
+    secrets: inherit
+    with:
+      susfs_version: ${{ inputs.susfs_version }}
 
-  # build-a14-5-15:
-  #   uses: ./.github/workflows/kernel-a14-5-15.yml
-  #   secrets: inherit
+  build-a14-5-15:
+    if: inputs.build_selection == 'All' || inputs.build_selection == 'Android14-5.15'
+    uses: ./.github/workflows/kernel-a14-5-15.yml
+    secrets: inherit
+    with:
+      susfs_version: ${{ inputs.susfs_version }}
 
-  # build-a14-6-1:
-  #   uses: ./.github/workflows/kernel-a14-6-1.yml
-  #   secrets: inherit
+  build-a14-6-1:
+    if: inputs.build_selection == 'All' || inputs.build_selection == 'Android14-6.1'
+    uses: ./.github/workflows/kernel-a14-6-1.yml
+    secrets: inherit
+    with:
+      susfs_version: ${{ inputs.susfs_version }}
 
   build-a15-6-6:
+    if: inputs.build_selection == 'All' || inputs.build_selection == 'Android15-6.6'
     uses: ./.github/workflows/kernel-a15-6-6.yml
     secrets: inherit
+    with:
+      susfs_version: ${{ inputs.susfs_version }}
 
   release:
     runs-on: ubuntu-latest
+    if: inputs.build_selection == 'All' && inputs.release_type != 'Actions'
     needs:
       # - build-a12-5-10
       # - build-a13-5-10
@@ -55,8 +105,8 @@ jobs:
 
     env:
       GH_TOKEN: ${{ github.token }}
-      RELEASE_NAME: "!!TESTING!! GKI Kernels With WKSU & SUSFS v1.5.11 !!!TESTING!!!"
-      RELEASE_BODY:
+      RELEASE_NAME: "GKI Kernels With WKSU & SUSFS v1.5.12"
+      RELEASE_BODY: ""
     steps:
       # # - name: Maximize Build Space
         # uses: AdityaGarg8/remove-unwanted-software@v5
@@ -116,21 +166,18 @@ jobs:
           echo "BBG_REF=$BBG_REF" >> $GITHUB_ENV
           echo "BBG_URL=$BBG_URL" >> $GITHUB_ENV
 
-      - name: Generate and Create New Tag
+      - name: Generate New Tag
         if: inputs.release_type != 'Actions'
         run: |
-            LATEST_TAG=$(gh api repos/${{ github.repository }}/tags --jq '.[0].name')
+            LATEST_TAG=$(gh api repos/${{ github.repository }}/tags --jq '.[0].name' 2>/dev/null || echo "")
             if [ -z "$LATEST_TAG" ]; then
-              LATEST_TAG="v1.5.11-r0"
+              LATEST_TAG="v1.5.12-r0"
             fi
             
             NEW_TAG=$(echo "$LATEST_TAG" | awk -F'-r' '{suffix=$2; if (!suffix) suffix=0; suffix++; printf "%s-r%d", $1, suffix}')
     
             echo "New tag: $NEW_TAG"
             echo "NEW_TAG=${NEW_TAG}" >> $GITHUB_ENV
-
-            git tag $NEW_TAG
-            git push origin $NEW_TAG
 
       - name: Set tag for Actions only
         if: inputs.release_type == 'Actions'
@@ -158,7 +205,7 @@ jobs:
           Features:
           -> Wild KSU
           -> Multi Manager Support for WKSU, KernelSU-Next! Needs Testing: KSU, MKSU RKSU, xxKSU, KowSU and SukiSU (Best compatibility with WKSU, no support will be provided for other managers)
-          -> SUSFS ඞ v1.5.11
+          -> SUSFS ඞ v1.5.12
           -> Scope-Minimized Manual hooks v1.4
           -> Ptrace Patch Support for Older Kernels (<5.16)
           -> IPSet Support for Advanced Network Filtering
@@ -206,12 +253,20 @@ jobs:
       - name: Upload Release Assets
         if: inputs.release_type != 'Actions'
         run: |
-          for file in ./downloaded-artifacts/*/*; do
-            if [ -d "$file" ]; then
-              continue
+          for dir in ./downloaded-artifacts/*/; do
+            if [ -d "$dir" ]; then
+              # Upload only AnyKernel3 ZIP files (created in build.yml)
+              for zipfile in "$dir"/*-AnyKernel3.zip; do
+                if [ -f "$zipfile" ]; then
+                  echo "Re-compressing $(basename "$zipfile") with maximum compression..."
+                  unzip -q "$zipfile" -d temp_extract
+                  zip -r -9 "$(basename "$zipfile")" temp_extract/*
+                  echo "Uploading $(basename "$zipfile")..."
+                  gh release upload ${{ env.NEW_TAG }} "$(basename "$zipfile")"
+                  rm -rf temp_extract "$(basename "$zipfile")"
+                fi
+              done
             fi
-            echo "Uploading $file..."
-            gh release upload ${{ env.NEW_TAG }} "$file"
           done
 
       - name: Display Files Uploaded
