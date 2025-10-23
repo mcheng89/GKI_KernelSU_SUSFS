@@ -393,6 +393,9 @@ jobs:
           echo "CONFIG_IP6_NF_TARGET_HL=y" >> "${{ env.DEFCONFIG }}"
           echo "CONFIG_IP6_NF_MATCH_HL=y" >> "${{ env.DEFCONFIG }}"
 
+          echo "CONFIG_IP6_NF_TARGET_MASQUERADE=y" >> "${{ env.DEFCONFIG }}"
+          echo "CONFIG_IP6_NF_NAT=y" >> "${{ env.DEFCONFIG }}"
+
       - name: Configure TCP Congestion Control
         run: |
           cd "$CONFIG"

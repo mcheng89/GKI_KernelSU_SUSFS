@@ -44,34 +44,34 @@ on:
 
 jobs:
 
-  build-a12-5-10:
-    if: (inputs.build_selection == 'All' || inputs.build_selection == 'Android12-5.10') && inputs.release_type != 'Release (No Artifacts)'
-    uses: ./.github/workflows/kernel-a12-5-10.yml
-    secrets: inherit
+  # build-a12-5-10:
+  #   if: (inputs.build_selection == 'All' || inputs.build_selection == 'Android12-5.10') && inputs.release_type != 'Release (No Artifacts)'
+  #   uses: ./.github/workflows/kernel-a12-5-10.yml
+  #   secrets: inherit
 
 
-  build-a13-5-10:
-    if: (inputs.build_selection == 'All' || inputs.build_selection == 'Android13-5.10') && inputs.release_type != 'Release (No Artifacts)'
-    uses: ./.github/workflows/kernel-a13-5-10.yml
-    secrets: inherit
+  # build-a13-5-10:
+  #   if: (inputs.build_selection == 'All' || inputs.build_selection == 'Android13-5.10') && inputs.release_type != 'Release (No Artifacts)'
+  #   uses: ./.github/workflows/kernel-a13-5-10.yml
+  #   secrets: inherit
 
 
-  build-a13-5-15:
-    if: (inputs.build_selection == 'All' || inputs.build_selection == 'Android13-5.15') && inputs.release_type != 'Release (No Artifacts)'
-    uses: ./.github/workflows/kernel-a13-5-15.yml
-    secrets: inherit
+  # build-a13-5-15:
+  #   if: (inputs.build_selection == 'All' || inputs.build_selection == 'Android13-5.15') && inputs.release_type != 'Release (No Artifacts)'
+  #   uses: ./.github/workflows/kernel-a13-5-15.yml
+  #   secrets: inherit
 
 
-  build-a14-5-15:
-    if: (inputs.build_selection == 'All' || inputs.build_selection == 'Android14-5.15') && inputs.release_type != 'Release (No Artifacts)'
-    uses: ./.github/workflows/kernel-a14-5-15.yml
-    secrets: inherit
+  # build-a14-5-15:
+  #   if: (inputs.build_selection == 'All' || inputs.build_selection == 'Android14-5.15') && inputs.release_type != 'Release (No Artifacts)'
+  #   uses: ./.github/workflows/kernel-a14-5-15.yml
+  #   secrets: inherit
 
 
-  build-a14-6-1:
-    if: (inputs.build_selection == 'All' || inputs.build_selection == 'Android14-6.1') && inputs.release_type != 'Release (No Artifacts)'
-    uses: ./.github/workflows/kernel-a14-6-1.yml
-    secrets: inherit
+  # build-a14-6-1:
+  #   if: (inputs.build_selection == 'All' || inputs.build_selection == 'Android14-6.1') && inputs.release_type != 'Release (No Artifacts)'
+  #   uses: ./.github/workflows/kernel-a14-6-1.yml
+  #   secrets: inherit
 
 
   build-a15-6-6:
@@ -90,11 +90,11 @@ jobs:
     runs-on: ubuntu-latest
     if: inputs.build_selection == 'All' && inputs.release_type != 'Actions' && (inputs.release_type == 'Release (No Artifacts)' || success())
     needs:
-      - build-a12-5-10
-      - build-a13-5-10
-      - build-a13-5-15
-      - build-a14-5-15
-      - build-a14-6-1
+      # - build-a12-5-10
+      # - build-a13-5-10
+      # - build-a13-5-15
+      # - build-a14-5-15
+      # - build-a14-6-1
       - build-a15-6-6
 
     env:
@@ -124,11 +124,11 @@ jobs:
           GITLAB_REPO="susfs4ksu"
           
           declare -A BRANCH_MAP=(
-            ["gki_android12_5_10"]="gki-android12-5.10"
-            ["gki_android13_5_10"]="gki-android13-5.10"
-            ["gki_android13_5_15"]="gki-android13-5.15"
-            ["gki_android14_5_15"]="gki-android14-5.15"
-            ["gki_android14_6_1"]="gki-android14-6.1"
+            # ["gki_android12_5_10"]="gki-android12-5.10"
+            # ["gki_android13_5_10"]="gki-android13-5.10"
+            # ["gki_android13_5_15"]="gki-android13-5.15"
+            # ["gki_android14_5_15"]="gki-android14-5.15"
+            # ["gki_android14_6_1"]="gki-android14-6.1"
             ["gki_android15_6_6"]="gki-android15-6.6"
           )
           
@@ -269,24 +269,24 @@ jobs:
           echo "GitHub release created with the following files:"
           ls ./downloaded-artifacts/**/*
             
-      - name: Send Telegram Notification
-        if: inputs.release_type != 'Actions'
-        run: |
-          RELEASE_TYPE_TEXT=""
-          if [ "${{ inputs.release_type }}" == "Pre-Release" ]; then
-            RELEASE_TYPE_TEXT="🧪 *Pre-Release*"
-          elif [ "${{ inputs.release_type }}" == "Release (No Artifacts)" ]; then
-            RELEASE_TYPE_TEXT="🚀 *Release*"
-          else
-            RELEASE_TYPE_TEXT="🚀 *Release*"
-          fi
+      # - name: Send Telegram Notification
+      #   if: inputs.release_type != 'Actions'
+      #   run: |
+      #     RELEASE_TYPE_TEXT=""
+      #     if [ "${{ inputs.release_type }}" == "Pre-Release" ]; then
+      #       RELEASE_TYPE_TEXT="🧪 *Pre-Release*"
+      #     elif [ "${{ inputs.release_type }}" == "Release (No Artifacts)" ]; then
+      #       RELEASE_TYPE_TEXT="🚀 *Release*"
+      #     else
+      #       RELEASE_TYPE_TEXT="🚀 *Release*"
+      #     fi
           
-          curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
-            -F message_thread_id="${{ secrets.TELEGRAM_TOPIC_ID_GKI }}" \
-            -F text="
-            🌽 *New Kernel $RELEASE_TYPE_TEXT Uploaded*  
-            📦 *Repository:* [${{ github.repository }}](https://github.com/${{ github.repository }})  
-            ✏️ *Commit:* [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})  
-            [🔗 View GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ env.NEW_TAG }})" \
-            -F parse_mode="Markdown"
+      #     curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+      #       -F chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+      #       -F message_thread_id="${{ secrets.TELEGRAM_TOPIC_ID_GKI }}" \
+      #       -F text="
+      #       🌽 *New Kernel $RELEASE_TYPE_TEXT Uploaded*  
+      #       📦 *Repository:* [${{ github.repository }}](https://github.com/${{ github.repository }})  
+      #       ✏️ *Commit:* [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})  
+      #       [🔗 View GitHub Release](https://github.com/${{ github.repository }}/releases/tag/${{ env.NEW_TAG }})" \
+      #       -F parse_mode="Markdown"
