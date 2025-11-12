@@ -21,6 +21,7 @@ on:
 
 jobs:
   build-gki:
+    name: "${{ inputs.kernel_version }}.${{ inputs.sub_level }}-${{ inputs.android_version }}-${{ inputs.os_patch_level }} (${{ matrix.apply_bypass }})"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -88,31 +89,6 @@ jobs:
           git clone https://github.com/WildKernels/kernel_patches.git
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "$SUSFS_BRANCH"
 
-          # Checkout specific commits for SUSFS v1.5.12
-          #cd susfs4ksu
-          #case "${{ inputs.android_version }}-${{ inputs.kernel_version }}" in
-          #  "android12-5.10")
-          #    git checkout ed19454a4b5905e6718c9a22fad769b906837931
-          #    ;;
-          #  "android13-5.10")
-          #    git checkout 8919927b63d95e62d33842452b9a60546187fb7b
-          #    ;;
-          #  "android13-5.15")
-          #    git checkout 700b9316b5a1cab174401b57f4198782a17154fb
-          #    ;;
-          #  "android14-5.15")
-          #    git checkout e1b1bba04b3cada700b8fd5bda4cfd4c59de07a2
-          #    ;;
-          #  "android14-6.1")
-          #    git checkout f16560ce8263fbfa9b2f259e9531f72d6fda4e3f
-          #    ;;
-          #  "android15-6.6")
-          #    git checkout c49b1dab205bbc4ef20b120e84c5b7530355961d
-          #    ;;
-          #esac
-          #cd ..
-          
-
       - name: Initialize and Sync Kernel Source
         run: |
           mkdir -p "$CONFIG"
@@ -142,8 +118,7 @@ jobs:
           cd "$CONFIG"
           du -BG -d 2 | sort -nr
 
-      - name: Extract Actual Sublevel for LTS Builds
-        if: inputs.sub_level == 'X'
+      - name: Extract Actual Sublevel
         run: |
           cd "$CONFIG/common"
           
@@ -151,25 +126,10 @@ jobs:
             ACTUAL_SUBLEVEL=$(grep '^SUBLEVEL = ' Makefile | awk '{print $3}')
             
             if [ -n "$ACTUAL_SUBLEVEL" ]; then
-              OLD_CONFIG="$CONFIG"
-              NEW_CONFIG="${{ inputs.android_version }}-${{ inputs.kernel_version }}-$ACTUAL_SUBLEVEL"
-              
-              echo "CONFIG=$NEW_CONFIG" >> $GITHUB_ENV
               echo "ACTUAL_SUBLEVEL=$ACTUAL_SUBLEVEL" >> $GITHUB_ENV
-              
-              cd ../..
-              if [ -d "$OLD_CONFIG" ]; then
-                echo "Renaming directory from $OLD_CONFIG to $NEW_CONFIG"
-                mv "$OLD_CONFIG" "$NEW_CONFIG"
-                if [ ! -d "$NEW_CONFIG" ]; then
-                  echo "Error: Directory rename failed, $NEW_CONFIG does not exist"
-                  exit 1
-                fi
-                echo "Directory successfully renamed to $NEW_CONFIG"
-              else
-                echo "Error: Source directory $OLD_CONFIG does not exist"
-                exit 1
-              fi
+              echo "Extracted ACTUAL_SUBLEVEL=$ACTUAL_SUBLEVEL; no directory changes performed."
+            else
+              echo "Warning: SUBLEVEL not found in Makefile; continuing with inputs.sub_level."
             fi
           fi
 
@@ -236,7 +196,20 @@ jobs:
           # Apply core SUSFS patches
           cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch ./common/
           cd common
+
+          # Pre-SUSFS sed safeguards removed; moved below core patch
+
+          # Apply SUSFS core patch
           patch -p1 < 50_add_susfs_in_gki-${{ inputs.android_version }}-${{ inputs.kernel_version }}.patch || true
+
+          # Post-SUSFS sed safeguards for task_mmu.c 'goto show_pad' handling
+          if ( ( [[ "${{ inputs.android_version }}" == "android12" ]] && [[ "${{ inputs.kernel_version }}" == "5.10" ]] && (( $ACTUAL_SUBLEVEL <= 209 )) ) \
+               || ( [[ "${{ inputs.android_version }}" == "android13" ]] && [[ "${{ inputs.kernel_version }}" == "5.10" ]] && [[ "${{ inputs.os_patch_level }}" != "2024-05" ]] && (( $ACTUAL_SUBLEVEL <= 209 )) ) \
+               || ( [[ "${{ inputs.android_version }}" == "android13" ]] && [[ "${{ inputs.kernel_version }}" == "5.15" ]] && [[ "${{ inputs.os_patch_level }}" != "2024-05" ]] && (( $ACTUAL_SUBLEVEL <= 148 )) ) \
+               || ( [[ "${{ inputs.android_version }}" == "android14" ]] && [[ "${{ inputs.kernel_version }}" == "5.15" ]] && [[ "${{ inputs.os_patch_level }}" != "2024-05" ]] && (( $ACTUAL_SUBLEVEL <= 148 )) ) \
+               || ( [[ "${{ inputs.android_version }}" == "android14" ]] && [[ "${{ inputs.kernel_version }}" == "6.1" ]] && [[ "${{ inputs.os_patch_level }}" != "2024-05" ]] && (( $ACTUAL_SUBLEVEL <= 75 )) ) ); then
+            sed -i -e 's/goto show_pad;/return 0;/' ./fs/proc/task_mmu.c
+          fi
 
           # Apply additional SUSFS patches for Android 13 5.15 compatibility
           if [[ "${{ inputs.android_version }}" == "android13" ]] && [[ "${{ inputs.kernel_version }}" == "5.15" ]] && (( ${{ inputs.sub_level }} <= 41 )); then
@@ -250,17 +223,17 @@ jobs:
           fi
 
           # Use ACTUAL_SUBLEVEL for LTS or actual kernel sublevel if available
-          if ( [[ "${{ inputs.android_version }}" == "android14" ]] && [[ "${{ inputs.kernel_version }}" == "6.1" ]] && (( $ACTUAL_SUBLEVEL >= 145 )) ) \
+          if ( [[ "${{ inputs.android_version }}" == "android12" ]] && [[ "${{ inputs.kernel_version }}" == "5.10" ]] && (( $ACTUAL_SUBLEVEL <= 43 )) ) \
+            || ( [[ "${{ inputs.android_version }}" == "android14" ]] && [[ "${{ inputs.kernel_version }}" == "6.1" ]] && (( $ACTUAL_SUBLEVEL >= 145 )) ) \
             || ( [[ "${{ inputs.android_version }}" == "android15" ]] && [[ "${{ inputs.kernel_version }}" == "6.6" ]] && (( $ACTUAL_SUBLEVEL >= 98 )) ); then
             cp ../../kernel_patches/wild/susfs_fix_patches/v${SUSFS_VERSION}/1_fix_base.c.patch ./
             patch -p1 < 1_fix_base.c.patch || true
           fi
 
-          #if ( [[ "${{ inputs.android_version }}" == "android14" ]] && [[ "${{ inputs.kernel_version }}" == "6.1" ]] && (( $ACTUAL_SUBLEVEL >= 145 )) ) \
-          #  || ( [[ "${{ inputs.android_version }}" == "android15" ]] && [[ "${{ inputs.kernel_version }}" == "6.6" ]] && (( $ACTUAL_SUBLEVEL >= 98 )) ); then
-          #  cp ../../kernel_patches/wild/susfs_fix_patches/v${SUSFS_VERSION}/2_fix_base.c.patch ./
-          #  patch -p1 < 2_fix_base.c.patch || true
-          #fi
+          if [[ "${{ inputs.android_version }}" == "android12" ]] && [[ "${{ inputs.kernel_version }}" == "5.10" ]] && (( $ACTUAL_SUBLEVEL <= 43 )); then
+            cp ../../kernel_patches/wild/susfs_fix_patches/v${SUSFS_VERSION}/2_fix_base.c.patch ./
+            patch -p1 < 2_fix_base.c.patch || true
+          fi
 
           if ( [[ "${{ inputs.android_version }}" == "android15" ]] && [[ "${{ inputs.kernel_version }}" == "6.6" ]] && (( $ACTUAL_SUBLEVEL <= 58 )) ); then
             cp ../../kernel_patches/wild/susfs_fix_patches/v${SUSFS_VERSION}/fix_task_mmu.c.patch ./
@@ -452,8 +425,8 @@ jobs:
           echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> "${{ env.DEFCONFIG }}"
           echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> "${{ env.DEFCONFIG }}"
 
-      - name: Configure Sound
-        if: false
+      - name: Configure SND
+        if: true
         run: |
           cd "$CONFIG"
           # Sound Configuration
@@ -466,16 +439,49 @@ jobs:
           echo "CONFIG_SND_PROC_FS=y" >> "${{ env.DEFCONFIG }}"
           echo "CONFIG_SND_ALOOP=m" >> "${{ env.DEFCONFIG }}"
           
-          # Add snd-aloop.ko to modules list
-          if [ -f "build/build.sh" ]; then
-            echo "sound/drivers/snd-aloop.ko" >> common/android/gki_aarch64_modules
-          else
-            sed -i '/_COMMON_GKI_MODULES_LIST = \\[/,/\\]/ s/\\]/    "sound\/drivers\/snd-aloop.ko",\\n&/' common/modules.bzl
+           # Add snd-aloop.ko to modules list
+          echo "sound/drivers/snd-aloop.ko" >> common/android/gki_aarch64_modules
+
+          if [[ -f common/modules.bzl ]]; then
+            # Insert before the closing bracket of COMMON_GKI_MODULES_LIST or _COMMON_GKI_MODULES_LIST
+            echo "snd-aloop injection: adding to module list"
+            if ( [[ "${{ inputs.android_version }}" == "android14" ]] && [[ "${{ inputs.kernel_version }}" == "5.15" ]] && (( $ACTUAL_SUBLEVEL <= 110 )) && [[ "${{ inputs.os_patch_level }}" != "2023-09" ]] ) \
+            || ( [[ "${{ inputs.android_version }}" == "android14" ]] && [[ "${{ inputs.kernel_version }}" == "6.1" ]] && (( $ACTUAL_SUBLEVEL <= 25 )) && [[ "${{ inputs.os_patch_level }}" != "2023-09" ]] ); then
+              sed -i '/COMMON_GKI_MODULES_LIST = \[/,/^[[:space:]]*\]/{/^[[:space:]]*\]$/i\    "sound/drivers/snd-aloop.ko",
+              }' common/modules.bzl
+            else
+              sed -i '/_COMMON_GKI_MODULES_LIST = \[/,/^[[:space:]]*\]/{/^[[:space:]]*\]$/i\    "sound/drivers/snd-aloop.ko",
+              }' common/modules.bzl
+            fi
+            
+            # Verify the injection was successful
+            if grep -q '"sound/drivers/snd-aloop.ko"' common/modules.bzl; then
+              echo "✓ snd-aloop injection: successfully added to module list"
+            else
+              echo "✗ snd-aloop injection: failed to add to module list"
+              exit 1
+            fi
           fi
           
           # Add symbols to abi_gki_aarch64
-          SYMBOL_LIST=common/android/abi_gki_aarch64
-          cat Wild_KSU/kernel/export_symbol.txt | awk '{sub("[ \t]+","");print "  "$0}' >> $SYMBOL_LIST
+          #SYMBOL_LIST=common/android/abi_gki_aarch64
+          #cat Wild_KSU/kernel/export_symbol.txt | awk '{sub("[ \t]+","");print "  "$0}' >> $SYMBOL_LIST
+
+          # ABI compare bypass per kernel/android version
+          # Edit each block as needed per version
+          if [[ "${{ inputs.android_version }}" == "android12" && "${{ inputs.kernel_version }}" == "5.10" ]]; then
+            sed -i 's/^\s*exit 1$/    echo "Who Cares? Bypassing Now!"/' build/abi/compare_to_symbol_list
+          elif [[ "${{ inputs.android_version }}" == "android13" && "${{ inputs.kernel_version }}" == "5.10" ]]; then
+            sed -i 's/^\s*exit 1$/    echo "Who Cares? Bypassing Now!"/' build/kernel/abi/compare_to_symbol_list
+          elif [[ "${{ inputs.android_version }}" == "android13" && "${{ inputs.kernel_version }}" == "5.15" ]]; then
+            sed -i 's/^\s*exit 1$/    echo "Who Cares? Bypassing Now!"/' build/kernel/abi/compare_to_symbol_list
+          elif [[ "${{ inputs.android_version }}" == "android14" && "${{ inputs.kernel_version }}" == "5.15" ]]; then
+            perl -i -pe 's/^(\s*)return 1$/$1print("Who Cares? Bypassing Now!")\n$1return 0/g if /if missing_symbols:/../return 1/' build/kernel/abi/check_buildtime_symbol_protection.py
+          elif [[ "${{ inputs.android_version }}" == "android14" && "${{ inputs.kernel_version }}" == "6.1" ]]; then
+            perl -i -pe 's/^(\s*)return 1$/$1print("Who Cares? Bypassing Now!")\n$1return 0/g if /if missing_symbols:/../return 1/' build/kernel/abi/check_buildtime_symbol_protection.py
+          elif [[ "${{ inputs.android_version }}" == "android15" && "${{ inputs.kernel_version }}" == "6.6" ]]; then
+            perl -i -pe 's/^(\s*)return 1$/$1print("Who Cares? Bypassing Now!")\n$1return 0/g if /if missing_symbols:/../return 1/' build/kernel/abi/check_buildtime_symbol_protection.py
+          fi
 
       - name: Configure Build Optimization
         run: |
@@ -494,7 +500,7 @@ jobs:
           #Add Wild to Kernel Version
           sed -i '$s|echo "\$res"|echo "\$res-Wild"|' ./common/scripts/setlocalversion
           #Set Kernel Timestamp
-          perl -pi -e 's{UTS_VERSION="\$\(echo \$UTS_VERSION \$CONFIG_FLAGS \$TIMESTAMP \| cut -b -\$UTS_LEN\)"}{UTS_VERSION="#1 SMP PREEMPT Sun Apr 20 04:20:00 UTC 2025"}' ./common/scripts/mkcompile_h
+          perl -pi -e 's{UTS_VERSION="\$\(echo \$UTS_VERSION \$CONFIG_FLAGS \$TIMESTAMP \| cut -b -\$UTS_LEN\)"}{UTS_VERSION="#1 SMP PREEMPT \$(date -u +%a\ %b\ %d\ %H:%M:%S\ UTC\ %Y)"}' ./common/scripts/mkcompile_h
           if [ -f "build/build.sh" ]; then
             #Remove Dirty Flag
             sed -i 's/-dirty//' ./common/scripts/setlocalversion
@@ -508,14 +514,7 @@ jobs:
 
       - name: Set file name
         run: |
-          # Set artifact name base for consistent naming
-          # Prepare sublevel for naming
-          SUBLEVEL_FOR_NAME="${{ inputs.sub_level }}"
-          if [ -n "$ACTUAL_SUBLEVEL" ]; then
-            SUBLEVEL_FOR_NAME="$ACTUAL_SUBLEVEL"
-          fi
-          # Set artifact name base for consistent naming
-          ARTIFACT_BASE="${{ inputs.android_version }}-${{ inputs.kernel_version }}.${SUBLEVEL_FOR_NAME}-${{ inputs.os_patch_level }}-${{ matrix.apply_bypass == 'bypass' && 'Bypass' || 'Normal' }}"
+          ARTIFACT_BASE="${{ inputs.kernel_version }}.$ACTUAL_SUBLEVEL-${{ inputs.android_version }}-${{ inputs.os_patch_level }}-${{ matrix.apply_bypass == 'bypass' && 'Bypass' || 'Normal' }}"
           echo "ARTIFACT_BASE=$ARTIFACT_BASE" >> $GITHUB_ENV
           echo "FILE_NAME=$ARTIFACT_BASE" >> $GITHUB_ENV
 
@@ -542,6 +541,19 @@ jobs:
             echo "Error: Image file not found in any expected location"
             exit 1
           fi
+          sed -i 's|^do\.modules=.*|do.modules=1|' ./AnyKernel3/anykernel.sh
+
+      - name: Copy snd-aloop module for Android 12-13
+        if: inputs.android_version == 'android12' || inputs.android_version == 'android13'
+        run: |
+          mkdir -p AnyKernel3/modules/data/adb/lkm
+          cp "./$CONFIG/out/${{ inputs.android_version }}-${{ inputs.kernel_version }}/dist/snd-aloop.ko" AnyKernel3/modules/data/adb/lkm/
+
+      - name: Copy snd-aloop module for Android 14-15
+        if: inputs.android_version == 'android14' || inputs.android_version == 'android15'
+        run: |
+          mkdir -p AnyKernel3/modules/data/adb/lkm
+          cp "./$CONFIG/bazel-bin/common/kernel_aarch64/snd-aloop.ko" AnyKernel3/modules/data/adb/lkm/
 
       - name: Search for Kernel Modules
         run: |
@@ -601,75 +613,59 @@ jobs:
         if: ${{ inputs.android_version == 'android12' || inputs.android_version == 'android13' }}
         run: |
           mkdir bootimgs
-
-          echo "Creating bootimgs folder and copying images..."
           cp ./$CONFIG/out/${{ inputs.android_version }}-${{ inputs.kernel_version }}/dist/Image ./bootimgs
           cp ./$CONFIG/out/${{ inputs.android_version }}-${{ inputs.kernel_version }}/dist/Image.lz4 ./bootimgs
-          cp ./$CONFIG/out/${{ inputs.android_version }}-${{ inputs.kernel_version }}/dist/Image ./
-          cp ./$CONFIG/out/${{ inputs.android_version }}-${{ inputs.kernel_version }}/dist/Image.lz4 ./
+          cp ./$CONFIG/out/${{ inputs.android_version }}-${{ inputs.kernel_version }}/dist/Image ./${{ env.FILE_NAME }}-Image
+          cp ./$CONFIG/out/${{ inputs.android_version }}-${{ inputs.kernel_version }}/dist/Image.lz4 ./${{ env.FILE_NAME }}-Image.lz4
 
           # Create gzip of the Image file
-          gzip -n -k -f -9 ./Image > ./Image.gz
-          gzip -n -k -f -9 ./Image > ./bootimgs/Image.gz
+          gzip -n -k -f -9 ./${{ env.FILE_NAME }}-Image > ./${{ env.FILE_NAME }}-Image.gz
+          gzip -n -k -f -9 ./bootimgs/Image > ./bootimgs/Image.gz
 
       - name: Create Bootimgs Folder and Copy Images for Android 14/15
         if: ${{ inputs.android_version == 'android14' || inputs.android_version == 'android15' }}
         run: |
           mkdir bootimgs
-
-          echo "Creating bootimgs folder and copying images..."
           cp ./$CONFIG/bazel-bin/common/kernel_aarch64/Image ./bootimgs
           cp ./$CONFIG/bazel-bin/common/kernel_aarch64/Image.lz4 ./bootimgs
-          cp ./$CONFIG/bazel-bin/common/kernel_aarch64/Image ./
-          cp ./$CONFIG/bazel-bin/common/kernel_aarch64/Image.lz4 ./
+          cp ./$CONFIG/bazel-bin/common/kernel_aarch64/Image ./${{ env.FILE_NAME }}-Image
+          cp ./$CONFIG/bazel-bin/common/kernel_aarch64/Image.lz4 ./${{ env.FILE_NAME }}-Image.lz4
 
           # Create gzip of the Image file
-          gzip -n -k -f -9 ./Image > ./Image.gz
-          gzip -n -k -f -9 ./Image > ./bootimgs/Image.gz
+          gzip -n -k -f -9 ./${{ env.FILE_NAME }}-Image > ./${{ env.FILE_NAME }}-Image.gz
+          gzip -n -k -f -9 ./bootimgs/Image > ./bootimgs/Image.gz
 
       - name: Android 12 boot image build script
         if: ${{ inputs.android_version == 'android12' }}
         run: |
-          echo "Changing to configuration directory: $CONFIG..."
           cd bootimgs
           
           GKI_URL=https://dl.google.com/android/gki/gki-certified-boot-android12-5.10-"${{ inputs.os_patch_level }}"_r1.zip
           FALLBACK_URL=https://dl.google.com/android/gki/gki-certified-boot-android12-5.10-2023-01_r1.zip
           
           # Check if the GKI URL is available
-          echo "Checking if GKI kernel URL is reachable: $GKI_URL"
           status=$(curl -sL -w "%{http_code}" "$GKI_URL" -o /dev/null)
           
           if [ "$status" = "200" ]; then
-              echo "[+] Downloading from GKI_URL"
               curl -Lo gki-kernel.zip "$GKI_URL"
           else
-              echo "[+] $GKI_URL not found, using $FALLBACK_URL"
               curl -Lo gki-kernel.zip "$FALLBACK_URL"
           fi
           
           # Unzip the downloaded kernel and remove the zip
-          echo "Unzipping the downloaded kernel..."
           unzip gki-kernel.zip && rm gki-kernel.zip
           
-          echo "Unpacking boot.img..."
           FULL_PATH=$(pwd)/boot-5.10.img
-          echo "Unpacking using: $FULL_PATH"
-          
-          echo "Running unpack_bootimg.py..."
           $UNPACK_BOOTIMG --boot_img="$FULL_PATH"
           
-          echo "Building boot.img"
           $MKBOOTIMG --header_version 4 --kernel Image --output boot.img --ramdisk out/ramdisk --os_version 12.0.0 --os_patch_level "${{ inputs.os_patch_level }}"
           $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot.img --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
           cp ./boot.img ../${{ env.FILE_NAME }}-boot.img
           
-          echo "Building boot-gz.img"
           $MKBOOTIMG --header_version 4 --kernel Image.gz --output boot-gz.img --ramdisk out/ramdisk --os_version 12.0.0 --os_patch_level "${{ inputs.os_patch_level }}"
           $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-gz.img --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
           cp ./boot-gz.img ../${{ env.FILE_NAME }}-boot-gz.img
           
-          echo "Building boot-lz4.img"
           $MKBOOTIMG --header_version 4 --kernel Image.lz4 --output boot-lz4.img --ramdisk out/ramdisk --os_version 12.0.0 --os_patch_level "${{ inputs.os_patch_level }}"
           $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-lz4.img --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
           cp ./boot-lz4.img ../${{ env.FILE_NAME }}-boot-lz4.img
@@ -695,6 +691,7 @@ jobs:
           cp ./boot-lz4.img ../${{ env.FILE_NAME }}-boot-lz4.img
 
       - name: Upload AnyKernel3 Artifacts
+        id: upload_ak3
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.FILE_NAME }}-AnyKernel3
@@ -702,150 +699,118 @@ jobs:
             ./AnyKernel3/**
           compression-level: 9
 
-      - name: Upload Boot Image
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.FILE_NAME }}-boot.img
-          path: |
-            *-boot.img
-          compression-level: 9
-          
-      - name: Upload Boot Image (GZ)
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.FILE_NAME }}-boot-gz.img
-          path: |
-            *-boot-gz.img
-          compression-level: 9
-          
-      - name: Upload Boot Image (LZ4)
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.FILE_NAME }}-boot-lz4.img
-          path: |
-            *-boot-lz4.img
-          compression-level: 9
-          
-      - name: Upload Raw Image
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.FILE_NAME }}-Image
-          path: |
-            Image
-          compression-level: 9
-          
-      - name: Upload Raw Image (GZ)
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.FILE_NAME }}-Image.gz
-          path: |
-            Image.gz
-          compression-level: 9
-          
-      - name: Upload Raw Image (LZ4)
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.FILE_NAME }}-Image.lz4
-          path: |
-            Image.lz4
-          compression-level: 9
-
-      - name: Upload Build Diagnostics
+      - name: Extra Artifacts
         if: ${{ always() }}
+        id: upload_misc
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.FILE_NAME }}-Rejected-Patches
-          path: patch-rejects
+          name: ${{ env.FILE_NAME }}-Misc
+          path: |
+            ${{ env.FILE_NAME }}-Image
+            ${{ env.FILE_NAME }}-Image.gz
+            ${{ env.FILE_NAME }}-Image.lz4
+            ${{ env.FILE_NAME }}-boot.img
+            ${{ env.FILE_NAME }}-boot-gz.img
+            ${{ env.FILE_NAME }}-boot-lz4.img
+            patch-rejects/**
+            build_summary.md
+          if-no-files-found: ignore
           compression-level: 9
           
-      - name: Initialize Kernel Summary
+      - name: Generate Build Summary
+        if: ${{ always() }}
         run: |
-          echo "# Kernel Build Summary" >> $GITHUB_STEP_SUMMARY
+          # Create build summary file for inclusion in Misc artifact
+          echo "# Kernel Build Summary" > build_summary.md
           
           # Add build variant header
-          echo "## ${{ env.FILE_NAME }}" >> $GITHUB_STEP_SUMMARY
-      
-      - name: Add Build Information
-        run: |
+          echo "## ${{ env.FILE_NAME }}" >> build_summary.md
+          
           # Add build info
-          echo "## Build Information" >> $GITHUB_STEP_SUMMARY
-          echo "- **Android Version**: ${{ inputs.android_version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Kernel Version**: ${{ inputs.kernel_version }}.${{ inputs.sub_level }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **BBG**: Installed" >> $GITHUB_STEP_SUMMARY
-          echo "- **Bypass Mode**: ${{ matrix.apply_bypass }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Information" >> build_summary.md
+          echo "- **Android Version**: ${{ inputs.android_version }}" >> build_summary.md
+          echo "- **Kernel Version**: ${{ inputs.kernel_version }}.${{ inputs.sub_level }}" >> build_summary.md
+          echo "- **BBG**: Installed" >> build_summary.md
+          echo "- **Bypass Mode**: ${{ matrix.apply_bypass }}" >> build_summary.md
+          echo "" >> build_summary.md
 
-      - name: Add KSU Version
-        run: |
           # Get Wild_KSU commit
-          cd "$CONFIG/Wild_KSU"
-          WKSU_COMMIT=$(git rev-parse HEAD)
-          WKSU_URL="https://github.com/WildKernels/Wild_KSU/commit/$WKSU_COMMIT"
-          echo "- **Wild_KSU**: [$WKSU_COMMIT]($WKSU_URL)" >> $GITHUB_STEP_SUMMARY
+          if [ -d "$CONFIG/Wild_KSU" ]; then
+            cd "$CONFIG/Wild_KSU"
+            WKSU_COMMIT=$(git rev-parse HEAD)
+            WKSU_URL="https://github.com/WildKernels/Wild_KSU/commit/$WKSU_COMMIT"
+            echo "- **Wild_KSU**: [$WKSU_COMMIT]($WKSU_URL)" >> "$GITHUB_WORKSPACE/build_summary.md"
+            cd "$GITHUB_WORKSPACE"
+          else
+            echo "- **Wild_KSU**: not present" >> build_summary.md
+          fi
           
-      - name: Add BBG Version
-        run: |
-          cd "$CONFIG/Baseband-guard"
-          BBG_COMMIT=$(git rev-parse HEAD)
-          BBG_URL="https://github.com/vc-teahouse/Baseband-guard/commit/$BBG_COMMIT"
-          echo "- **Baseband-guard**: [$BBG_COMMIT]($BBG_URL)" >> $GITHUB_STEP_SUMMARY
+          # Get Baseband-guard commit
+          if [ -d "$CONFIG/Baseband-guard" ]; then
+            cd "$CONFIG/Baseband-guard"
+            BBG_COMMIT=$(git rev-parse HEAD)
+            BBG_URL="https://github.com/vc-teahouse/Baseband-guard/commit/$BBG_COMMIT"
+            echo "- **Baseband-guard**: [$BBG_COMMIT]($BBG_URL)" >> "$GITHUB_WORKSPACE/build_summary.md"
+            cd "$GITHUB_WORKSPACE"
+          else
+            echo "- **Baseband-guard**: not present" >> build_summary.md
+          fi
           
-      - name: Add SUSFS Version
-        run: |
           # Get SUSFS4KSU commit
-          cd "$GITHUB_WORKSPACE/susfs4ksu"
-          SUSFS_COMMIT=$(git rev-parse HEAD)
-          SUSFS_URL="https://gitlab.com/simonpunk/susfs4ksu/-/commit/$SUSFS_COMMIT"
-          echo "- **SUSFS4KSU (v1.5.12)**: [$SUSFS_COMMIT]($SUSFS_URL)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-      
-      - name: Add Build Artifacts
-        if: ${{ always() }}
-        run: |
+          if [ -d "$GITHUB_WORKSPACE/susfs4ksu" ]; then
+            cd "$GITHUB_WORKSPACE/susfs4ksu"
+            SUSFS_COMMIT=$(git rev-parse HEAD)
+            SUSFS_URL="https://gitlab.com/simonpunk/susfs4ksu/-/commit/$SUSFS_COMMIT"
+            echo "- **SUSFS4KSU (v1.5.12)**: [$SUSFS_COMMIT]($SUSFS_URL)" >> "$GITHUB_WORKSPACE/build_summary.md"
+            cd "$GITHUB_WORKSPACE"
+          else
+            echo "- **SUSFS4KSU (v1.5.12)**: not present" >> build_summary.md
+          fi
+          echo "" >> build_summary.md
+          
           # Add artifact summary with presence verification
-          echo "## Build Artifacts" >> $GITHUB_STEP_SUMMARY
-      
-          # Verify AnyKernel3 contents
-          if [ -d "AnyKernel3" ] && [ "$(find AnyKernel3 -type f | wc -l)" -gt 0 ]; then
+          echo "## Build Artifacts" >> build_summary.md
+
+          # Verify AnyKernel3 contents - check if kernel Image was actually copied (indicates successful build)
+          if [ -d "AnyKernel3" ] && [ -f "AnyKernel3/Image" ]; then
             AK3_STATUS="✅"
           else
             AK3_STATUS="❌"
           fi
-          echo "- **AnyKernel3**: $AK3_STATUS ${{ env.FILE_NAME }}-AnyKernel3" >> $GITHUB_STEP_SUMMARY
-      
-          echo "### Boot Images" >> $GITHUB_STEP_SUMMARY
-          for f in "${{ env.FILE_NAME }}-boot.img" "${{ env.FILE_NAME }}-boot-gz.img" "${{ env.FILE_NAME }}-boot-lz4.img"; do
-            if [ -f "$f" ]; then status="✅"; else status="❌"; fi
-            case "$f" in
-              *boot.img) name="Boot Image (RAW)";;
-              *boot-gz.img) name="Boot Image (GZ)";;
-              *boot-lz4.img) name="Boot Image (LZ4)";;
-            esac
-            echo "- **$name**: $status $f" >> $GITHUB_STEP_SUMMARY
+          echo "- **AnyKernel3**: $AK3_STATUS ${{ env.FILE_NAME }}-AnyKernel3" >> build_summary.md
+
+          echo "### Misc (uploaded files)" >> build_summary.md
+          FILES_PRESENT=0
+          for f in "${{ env.FILE_NAME }}-Image" "${{ env.FILE_NAME }}-Image.gz" "${{ env.FILE_NAME }}-Image.lz4" "${{ env.FILE_NAME }}-boot.img" "${{ env.FILE_NAME }}-boot-gz.img" "${{ env.FILE_NAME }}-boot-lz4.img"; do
+            if [ -f "$f" ]; then FILES_PRESENT=$((FILES_PRESENT+1)); fi
           done
-      
-          echo "### Kernel Images" >> $GITHUB_STEP_SUMMARY
-          for f in "Image" "Image.gz" "Image.lz4"; do
-            if [ -f "$f" ]; then status="✅"; else status="❌"; fi
-            case "$f" in
-              Image) name="Kernel Image (RAW)";;
-              Image.gz) name="Kernel Image (GZ)";;
-              Image.lz4) name="Kernel Image (LZ4)";;
-            esac
-            echo "- **$name**: $status $f" >> $GITHUB_STEP_SUMMARY
-          done
-      
-          echo "### Diagnostics" >> $GITHUB_STEP_SUMMARY
-          echo "- **Rejected Patches**: ${{ env.FILE_NAME }}-Rejected-Patches" >> $GITHUB_STEP_SUMMARY
+          if [ "$FILES_PRESENT" -gt 0 ]; then
+            MISC_STATUS="✅"
+          else
+            MISC_STATUS="❌"
+          fi
+          echo "- **Set**: $MISC_STATUS ${{ env.FILE_NAME }}-Misc" >> build_summary.md
+          if [ "$MISC_STATUS" = "✅" ]; then
+            echo "  Included:" >> build_summary.md
+            for f in "${{ env.FILE_NAME }}-Image" "${{ env.FILE_NAME }}-Image.gz" "${{ env.FILE_NAME }}-Image.lz4" "${{ env.FILE_NAME }}-boot.img" "${{ env.FILE_NAME }}-boot-gz.img" "${{ env.FILE_NAME }}-boot-lz4.img"; do
+              if [ -f "$f" ]; then
+                echo "  - $f" >> build_summary.md
+              fi
+            done
+          fi
+
+          echo "### Diagnostics" >> build_summary.md
+          echo "- **Rejected Patches**: ${{ env.FILE_NAME }}-Rejected-Patches" >> build_summary.md
           if [ -f patch-rejects/index.txt ]; then
             if [ -s patch-rejects/index.txt ]; then
-              echo "  Rejected files:" >> $GITHUB_STEP_SUMMARY
+              echo "  Rejected files:" >> build_summary.md
               while IFS= read -r line; do
-                echo "    - $line" >> $GITHUB_STEP_SUMMARY
+                echo "    - $line" >> build_summary.md
               done < patch-rejects/index.txt
             else
-              echo "  Rejected file list is empty." >> $GITHUB_STEP_SUMMARY
+              echo "  Rejected file list is empty." >> build_summary.md
             fi
           else
-            echo "  No rejected patches found." >> $GITHUB_STEP_SUMMARY
+            echo "  No rejected patches found." >> build_summary.md
           fi
+
