@@ -98,6 +98,9 @@ jobs:
         KERNEL_PATCHES=$GITHUB_WORKSPACE/kernel_patches
         ANYKERNEL3=$GITHUB_WORKSPACE/AnyKernel3
         REPO=$GITHUB_WORKSPACE/git-repo/repo
+        MKBOOTIMG=$KERNEL_ROOT/tools/mkbootimg/mkbootimg.py
+        AVBTOOL=$KERNEL_ROOT/prebuilts/kernel-build-tools/linux-x86/bin/avbtool
+        BOOT_SIGN_KEY_PATH=$KERNEL_ROOT/prebuilts/kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem
         EOF
         
         mkdir -p "$GITHUB_WORKSPACE/git-repo"
@@ -773,6 +776,29 @@ jobs:
           exit 1
         fi
     
+    - name: Create Bootimgs Folder and Copy Images for Android 14/15
+      if: ${{ inputs.android_version == 'android14' || inputs.android_version == 'android15' }}
+      run: |
+        mkdir bootimgs
+        cp ./$CONFIG/bazel-bin/common/kernel_aarch64/Image ./bootimgs
+        cp ./$CONFIG/bazel-bin/common/kernel_aarch64/Image.lz4 ./bootimgs
+        cp ./$CONFIG/bazel-bin/common/kernel_aarch64/Image ./${{ env.FILE_NAME }}-Image
+        cp ./$CONFIG/bazel-bin/common/kernel_aarch64/Image.lz4 ./${{ env.FILE_NAME }}-Image.lz4
+
+        # Create gzip of the Image file
+        gzip -n -k -f -9 ./${{ env.FILE_NAME }}-Image > ./${{ env.FILE_NAME }}-Image.gz
+        gzip -n -k -f -9 ./bootimgs/Image > ./bootimgs/Image.gz
+
+    - name: Android 13/14/15 boot image build script
+      if: ${{ inputs.android_version == 'android13' || inputs.android_version == 'android14' || inputs.android_version == 'android15' }}
+      run: |
+        cd bootimgs
+        
+        echo "Building boot.img"
+        $MKBOOTIMG --header_version 4 --kernel Image --output boot.img
+        $AVBTOOL add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot.img --algorithm SHA256_RSA2048 --key $BOOT_SIGN_KEY_PATH
+        cp ./boot.img ../${{ env.FILE_NAME }}-boot.img
+
     - name: Copy snd-aloop module
       if: ${{ inputs.variant == 'vTomsonek' }}
       run: |
@@ -838,4 +864,21 @@ jobs:
         if-no-files-found: ignore
         compression-level: 9
 
+    - name: Extra Artifacts
+      if: ${{ always() }}
+      id: upload_misc
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.FILE_NAME }}-Misc
+        path: |
+          ${{ env.FILE_NAME }}-Image
+          ${{ env.FILE_NAME }}-Image.gz
+          ${{ env.FILE_NAME }}-Image.lz4
+          ${{ env.FILE_NAME }}-boot.img
+          ${{ env.FILE_NAME }}-boot-gz.img
+          ${{ env.FILE_NAME }}-boot-lz4.img
+          patch-rejects/**
+          build_summary.md
+        if-no-files-found: ignore
+        compression-level: 9
 # End of workflow
