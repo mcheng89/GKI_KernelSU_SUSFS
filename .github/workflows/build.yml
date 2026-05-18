@@ -102,7 +102,12 @@ jobs:
         fi
         
         echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH" >> $GITHUB_ENV
-        echo "KBUILD_BUILD_TIMESTAMP=$(date -u -d @${SOURCE_DATE_EPOCH} '+%a %b %d %H:%M:%S UTC %Y')" >> $GITHUB_ENV
+        KBUILD_TS=$(date -u -d @${SOURCE_DATE_EPOCH} '+%a %b %d %H:%M:%S UTC %Y')
+        echo "KBUILD_BUILD_TIMESTAMP=${KBUILD_TS}" >> $GITHUB_ENV
+        # Set git author/committer date so any commits done by actions use this timestamp
+        GIT_DATE=$(date -u -d @${SOURCE_DATE_EPOCH} '+%Y-%m-%dT%H:%M:%SZ')
+        echo "GIT_COMMITTER_DATE=${GIT_DATE}" >> $GITHUB_ENV
+        echo "GIT_AUTHOR_DATE=${GIT_DATE}" >> $GITHUB_ENV
         echo "Build timestamp set to: $(date -u -d @${SOURCE_DATE_EPOCH} '+%Y-%m-%d %H:%M:%S UTC') (epoch: $SOURCE_DATE_EPOCH)"
 
     - name: Extract Sublevel and Set File Name
@@ -414,16 +419,16 @@ jobs:
     #     if-no-files-found: error
     #     archive: false
     #
-    # - name: Prepare AnyKernel3 Zip
-    #   uses: ./.github/actions/prepare-anykernel3
-    #   with:
-    #     android_version: ${{ inputs.android_version }}
-    #     kernel_version: ${{ inputs.kernel_version }}
-    #
-    # - name: Upload Artifacts
-    #   uses: actions/upload-artifact@v7
-    #   with:
-    #     name: ${{ steps.extract.outputs.file_name }}-AnyKernel3
-    #     path: ${{ github.workspace }}/AnyKernel3/**
-    #     if-no-files-found: ignore
-    #     compression-level: 9
+    - name: Prepare AnyKernel3 Zip
+      uses: ./.github/actions/prepare-anykernel3
+      with:
+        android_version: ${{ inputs.android_version }}
+        kernel_version: ${{ inputs.kernel_version }}
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.extract.outputs.file_name }}-AnyKernel3
+        path: ${{ github.workspace }}/AnyKernel3/**
+        if-no-files-found: ignore
+        compression-level: 9
