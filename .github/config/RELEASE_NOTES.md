@@ -1,24 +1,30 @@
 **IMPORTANT DISCLAIMER**
 
-This software is provided for testing and educational purposes only. Use at your own risk.
-The developers are not responsible for any damage, data loss, or issues that may occur.
-Please ensure you have proper backups before installation.
+> [!CAUTION]
+> This software is provided for testing and educational purposes only. Use at your own risk. The developers are not responsible for any damage, data loss, or issues that may occur. Please ensure you have proper backups before installation.
 
-## KernelSU-Next
+---
+
+## [KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next)
 
 A kernel-based root solution for Android devices.
 
-- Version: {{KSU_VERSION}}
-- Tag: {{KSU_GIT_TAG}}
-- Branch: {{KSUN_BRANCH}}
-- Commit: {{KSUN_COMMIT}}
+> [!IMPORTANT]
+> For best compatiblity ensure your Manager Version and Kernel Version match eg. 30100 = 30100.
 
-- URL: https://github.com/KernelSU-Next/KernelSU-Next
+| :---     |      :---:      |
+| Version: | {{KSU_VERSION}} |
+| Tag:     | {{KSU_GIT_TAG}} |
+| Branch:  | {{KSUN_BRANCH}} |
+| Commit:  | {{KSUN_COMMIT}} |
+
 - Manager: {{KSU_MANAGER}}
 
-## SUSFS
+## [SUSFS v2.1.0](https://gitlab.com/simonpunk/susfs4ksu)
 
 A KSU addon for hiding root using kernel patches and a userspace module!
+
+Reccomended Module: [susfs4ksu-module by sidex15](https://github.com/sidex15/susfs4ksu-module)
 
 - SUS_PATH - Hide suspicious paths
 - SUS_MOUNT - Hide mount points (no CLI support)
@@ -32,22 +38,17 @@ A KSU addon for hiding root using kernel patches and a userspace module!
 - Version: v2.1.0
 - Branches:
 
+| Branch | Commit |
+| :--- | :---: |
 {{SUSFS_BRANCHES}}
 
-- URL: https://gitlab.com/simonpunk/susfs4ksu
-
-## Baseband Guard (BBG)
+## [Baseband Guard (BBG)](https://github.com/vc-teahouse/Baseband-guard)
 
 LSM-based baseband security
 
-- Branch: main
-- URL: https://github.com/vc-teahouse/Baseband-guard
-
-## DroidSpaces
+## [DroidSpaces-OSS](https://github.com/ravindu644/Droidspaces-OSS)
 
 A lightweight, LXC-inspired container runtime for Android and Linux. Run full Linux distributions natively with zero performance penalty
-
-- URL: https://github.com/ravindu644/Droidspaces-OSS
 
 ## Networking
 
@@ -61,11 +62,9 @@ A lightweight, LXC-inspired container runtime for Android and Linux. Run full Li
 - TMPFS_XATTR - Extended attributes for tmpfs (Mountify support)
 - TMPFS_POSIX_ACL - POSIX ACLs for tmpfs
 
-## Kernel Flasher
+## [Kernel Flasher](https://github.com/fatalcoder524/KernelFlasher)
 
 Recommended flashing utility
-
-- URL: https://github.com/fatalcoder524/KernelFlasher
 
 ## Installation Instructions
 
