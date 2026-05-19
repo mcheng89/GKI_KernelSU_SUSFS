@@ -193,6 +193,10 @@ jobs:
             echo "No rejects found to upload."
         fi
 
+    - name: Rejects Summary
+      run: |
+        echo "Reject artifacts were collected locally only and are not uploaded." >> "$GITHUB_STEP_SUMMARY"
+
     - name: Upload AIO-REJ Artifact
       uses: actions/upload-artifact@v7
       with:
