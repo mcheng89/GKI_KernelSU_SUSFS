@@ -3,11 +3,11 @@
 > [!CAUTION]
 > This software is provided for testing and educational purposes only. Use at your own risk. The developers are not responsible for any damage, data loss, or issues that may occur. Please ensure you have proper backups before installation.
 
----
-
 ## [KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next)
 
 A kernel-based root solution for Android devices.
+
+Manager: {{KSU_MANAGER}}
 
 > [!IMPORTANT]
 > For best compatiblity ensure your Manager Version and Kernel Version match eg. 30100 = 30100.
@@ -18,25 +18,20 @@ A kernel-based root solution for Android devices.
 | Branch:  | {{KSUN_BRANCH}} |
 | Commit:  | {{KSUN_COMMIT}} |
 
-- Manager: {{KSU_MANAGER}}
-
 ## [SUSFS v2.1.0](https://gitlab.com/simonpunk/susfs4ksu)
 
 A KSU addon for hiding root using kernel patches and a userspace module!
 
 Reccomended Module: [susfs4ksu-module by sidex15](https://github.com/sidex15/susfs4ksu-module)
 
-- SUS_PATH - Hide suspicious paths
-- SUS_MOUNT - Hide mount points (no CLI support)
-- SUS_KSTAT - Spoof kernel statistics
-- SPOOF_UNAME - Kernel version spoofing
-- SPOOF_CMDLINE - Boot parameter spoofing
-- OPEN_REDIRECT - File access redirection
-- SUS_MAP - Memory mapping protection
-- AVC_SPOOF - Spoof procfs avc denial logs
-
-- Version: v2.1.0
-- Branches:
+:heavy_check_mark: SUS_PATH - Hide suspicious paths
+:heavy_check_mark: SUS_MOUNT - Hide mount points (no CLI support)
+:heavy_check_mark: SUS_KSTAT - Spoof kernel statistics
+:heavy_check_mark: SPOOF_UNAME - Kernel version spoofing
+:heavy_check_mark: SPOOF_CMDLINE - Boot parameter spoofing
+:heavy_check_mark: OPEN_REDIRECT - File access redirection
+:heavy_check_mark: SUS_MAP - Memory mapping protection
+:heavy_check_mark: AVC_SPOOF - Spoof procfs avc denial logs
 
 | Branch | Commit |
 | :--- | :---: |
