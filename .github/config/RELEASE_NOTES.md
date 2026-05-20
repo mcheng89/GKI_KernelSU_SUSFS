@@ -12,7 +12,6 @@ Manager: {{KSU_MANAGER}}
 > [!IMPORTANT]
 > For best compatiblity ensure your Manager Version and Kernel Version match eg. 30100 = 30100.
 
-| :---     |      :---:      |
 | Version: | {{KSU_VERSION}} |
 | Tag:     | {{KSU_GIT_TAG}} |
 | Branch:  | {{KSUN_BRANCH}} |
@@ -34,16 +33,15 @@ Reccomended Module: [susfs4ksu-module by sidex15](https://github.com/sidex15/sus
 :heavy_check_mark: AVC_SPOOF - Spoof procfs avc denial logs
 
 | Branch | Commit |
-| :--- | :---: |
 {{SUSFS_BRANCHES}}
 
-## [Baseband Guard (BBG)](https://github.com/vc-teahouse/Baseband-guard)
+## :shield: [Baseband Guard (BBG)](https://github.com/vc-teahouse/Baseband-guard)
 
-LSM-based baseband security
+A lightweight LSM (Linux Security Module) for the Android kernel, designed to block unauthorized writes to critical partitions/device nodes at the system level.
 
-## [DroidSpaces-OSS](https://github.com/ravindu644/Droidspaces-OSS)
+## :space_invader: [DroidSpaces-OSS](https://github.com/ravindu644/Droidspaces-OSS)
 
-A lightweight, LXC-inspired container runtime for Android and Linux. Run full Linux distributions natively with zero performance penalty
+A lightweight, LXC-inspired container runtime for Android and Linux. Run full Linux distributions natively with zero performance penalty.
 
 ## Networking
 
