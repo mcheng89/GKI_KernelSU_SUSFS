@@ -17,29 +17,49 @@ Manager: {{KSU_MANAGER}}
 | Branch:  | {{KSUN_BRANCH}} |
 | Commit:  | {{KSUN_COMMIT}} |
 
+<details>
+<summary>**Build Information**</summary>
+
+**Version**  
+`{{KSU_VERSION}}`
+
+**Tag**  
+`{{KSU_GIT_TAG}}`
+
+**Branch**  
+`{{KSUN_BRANCH}}`
+
+**Commit**  
+`{{KSUN_COMMIT}}`
+
+</details>
+
 ## [SUSFS v2.1.0](https://gitlab.com/simonpunk/susfs4ksu)
 
 A KSU addon for hiding root using kernel patches and a userspace module!
 
 Reccomended Module: [susfs4ksu-module by sidex15](https://github.com/sidex15/susfs4ksu-module)
 
-:heavy_check_mark: SUS_PATH - Hide suspicious paths
-:heavy_check_mark: SUS_MOUNT - Hide mount points (no CLI support)
-:heavy_check_mark: SUS_KSTAT - Spoof kernel statistics
-:heavy_check_mark: SPOOF_UNAME - Kernel version spoofing
-:heavy_check_mark: SPOOF_CMDLINE - Boot parameter spoofing
-:heavy_check_mark: OPEN_REDIRECT - File access redirection
-:heavy_check_mark: SUS_MAP - Memory mapping protection
-:heavy_check_mark: AVC_SPOOF - Spoof procfs avc denial logs
+- SUS_PATH - Hide suspicious paths
+- SUS_MOUNT - Hide mount points (no CLI support)
+- SUS_KSTAT - Spoof kernel statistics
+- SPOOF_UNAME - Kernel version spoofing
+- SPOOF_CMDLINE - Boot parameter spoofing
+- OPEN_REDIRECT - File access redirection
+- SUS_MAP - Memory mapping protection
+- AVC_SPOOF - Spoof procfs avc denial logs
 
-| Branch | Commit |
+<summary>**Build Information**</summary>
+
 {{SUSFS_BRANCHES}}
 
-## :shield: [Baseband Guard (BBG)](https://github.com/vc-teahouse/Baseband-guard)
+</details>
+
+## [Baseband Guard (BBG)](https://github.com/vc-teahouse/Baseband-guard)
 
 A lightweight LSM (Linux Security Module) for the Android kernel, designed to block unauthorized writes to critical partitions/device nodes at the system level.
 
-## :space_invader: [DroidSpaces-OSS](https://github.com/ravindu644/Droidspaces-OSS)
+## [DroidSpaces-OSS](https://github.com/ravindu644/Droidspaces-OSS)
 
 A lightweight, LXC-inspired container runtime for Android and Linux. Run full Linux distributions natively with zero performance penalty.
 
