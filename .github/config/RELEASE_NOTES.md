@@ -44,6 +44,7 @@ Reccomended Module: [susfs4ksu-module by sidex15](https://github.com/sidex15/sus
 - SUS_MAP - Memory mapping protection
 - AVC_SPOOF - Spoof procfs avc denial logs
 
+<details>
 <summary>**Build Information**</summary>
 
 {{SUSFS_BRANCHES}}
