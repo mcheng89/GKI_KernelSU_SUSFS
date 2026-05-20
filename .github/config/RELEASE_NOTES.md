@@ -12,11 +12,6 @@ Manager: {{KSU_MANAGER}}
 > [!IMPORTANT]
 > For best compatiblity ensure your Manager Version and Kernel Version match eg. 30100 = 30100.
 
-| Version: | {{KSU_VERSION}} |
-| Tag:     | {{KSU_GIT_TAG}} |
-| Branch:  | {{KSUN_BRANCH}} |
-| Commit:  | {{KSUN_COMMIT}} |
-
 <details>
 <summary>**Build Information**</summary>
 
