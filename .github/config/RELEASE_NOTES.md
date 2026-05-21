@@ -86,14 +86,17 @@ Install the KernelSU‑Next Manager APK, same version as mentioned in the releas
 Open the KernelSU‑Next app.
 Reboot the device if you performed any cleanup in step 2
 
-## Force Load Kernel Modules aka Bypass Mode — how to enable and what it does
+## Force Load Kernel Modules — Bypass flashing with `Bypass-Image`
 
 > [!IMPORTANT]
-> Most users do not need to do this so please try without this first! This has nothing to do with root detections and will not help you with them, this is for users who cannot boot my normal kernels and require this hack! 
+> Most users do not need this. Try the normal installer first. This option does not bypass root-detection systems — it only replaces the kernel image used during flashing for recovery/compatibility workarounds.
 
-**How to enable:** 
-- To instruct the installer to use the bypass kernel when flashing, include an empty file named `ENABLE_BYPASS` at the root of the AnyKernel3 package (the ZIP) before flashing it to the device. You do not need to modify the anykernel.sh file — just ensure `ENABLE_BYPASS` is present in the zip when you install it.
+**How to enable (new workflow):**
+- Enable the bypass behavior by setting `do.flash_bypass=1` in the package's `AnyKernel3/anykernel.sh`.
 
-**What it does:**
-- The Problem: Sometimes when installing a custom kernel, the device tries to load a kernel module that fails due to version mismatches, missing dependencies, or signature verification issues. This can cause boot failures or device instability.
-- The Solution: These versions change one line from false to true to force load the kernel module, bypassing the failure check that would normally prevent loading.
+**Behavior:**
+- When `do.flash_bypass=1`, the installer will look for `Bypass-Image` in the package root. If found, it will move `Bypass-Image` to replace the usual `Image` file prior to performing version checks and flashing.
+- If `do.flash_bypass=1` is set but no `Bypass-Image` is found, the installer will abort with an error to avoid accidental forced flashing of an unintended image.
+
+**Why / When to use:**
+- Use this only when a normal flash fails to boot due to kernel module or binary incompatibilities and you have a known-good alternate image to try.
