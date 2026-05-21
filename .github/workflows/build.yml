@@ -394,8 +394,7 @@ jobs:
     - name: Prepare AnyKernel3 Zip
       uses: ./.github/actions/prepare-anykernel3
       with:
-        android_version: ${{ inputs.android_version }}
-        kernel_version: ${{ inputs.kernel_version }}
+        version: ${{ inputs.version }}
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v7
