@@ -77,8 +77,6 @@ runs:
           --config=fast \
           --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment \
           --disk_cache=/home/runner/.cache/bazel/disk \
-          --repository_cache=/home/runner/.cache/bazel/repo \
-          --output_user_root=/home/runner/.cache/bazel/root \
           //common:kernel_aarch64
       fi
 
