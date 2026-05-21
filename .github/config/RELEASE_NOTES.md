@@ -92,9 +92,8 @@ Reboot the device if you performed any cleanup in step 2
 > Most users do not need to do this so please try without this first! This has nothing to do with root detections and will not help you with them, this is for users who cannot boot my normal kernels and require this hack! 
 
 **How to enable:** 
-- To instruct the installer to use the bypass kernel when flashing, include an empty file named `ENABLE_BYPASS` at the root of the AnyKernel3 package (the ZIP) before flashing it to the device. You do not need to modify anykernel settings — just ensure `ENABLE_BYPASS` is present in the zip when you install it.
+- To instruct the installer to use the bypass kernel when flashing, include an empty file named `ENABLE_BYPASS` at the root of the AnyKernel3 package (the ZIP) before flashing it to the device. You do not need to modify the anykernel.sh file — just ensure `ENABLE_BYPASS` is present in the zip when you install it.
 
 **What it does:**
 - The Problem: Sometimes when installing a custom kernel, the device tries to load a kernel module that fails due to version mismatches, missing dependencies, or signature verification issues. This can cause boot failures or device instability.
 - The Solution: These versions change one line from false to true to force load the kernel module, bypassing the failure check that would normally prevent loading.
-
