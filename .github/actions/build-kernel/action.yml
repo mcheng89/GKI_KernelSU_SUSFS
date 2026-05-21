@@ -73,8 +73,6 @@ runs:
       else
         
         tools/bazel info output_base
-        tools/bazel info client_env
-
         cp "${{ github.workspace }}/wild_gki.fragment" common/arch/arm64/configs/wild_gki.fragment
         tools/bazel build \
           --linkopt="--thinlto-cache-dir=/home/runner/.ld_cache" \
@@ -84,7 +82,6 @@ runs:
           //common:kernel_aarch64
 
         tools/bazel info output_base
-        tools/bazel info client_env
       fi
 
       ls
