@@ -95,6 +95,11 @@ runs:
     working-directory: ${{ github.workspace }}
     run: |
       set -euo pipefail
+      PATCH_FILE="${{ github.action_path }}/patches/anykernel-flash-mode-menu.patch"
+      if [ -f "$PATCH_FILE" ]; then
+        patch -d "${{ github.workspace }}/AnyKernel3" -p1 < "$PATCH_FILE"
+      fi
+
       if [ -f "${{ github.workspace }}/kernel/out/${{ inputs.version }}/dist/Image" ]; then
         if [[ ${{ inputs.bypass }} == "true" ]]; then
           cp "${{ github.workspace }}/kernel/out/${{ inputs.version }}/dist/Image" "${{ github.workspace }}/AnyKernel3/Bypass-Image"
