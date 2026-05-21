@@ -82,3 +82,45 @@ runs:
 
       ls
       ls out
+
+  - name: 'Gather Build Artifacts'
+    shell: bash
+    working-directory: ${{ github.workspace }}
+    run: |
+      set -euo pipefail
+      if [ -f "${{ github.workspace }}/kernel/out/$ANDROID_VERSION-$KERNEL_VERSION/dist/Image" ]; then
+        if [[ ${{ inputs.bypass }} == "true" ]]; then
+          cp "${{ github.workspace }}/kernel/out/$ANDROID_VERSION-$KERNEL_VERSION/dist/Image" "${{ github.workspace }}/AnyKernel3/Bypass-Image"
+        else
+          cp "${{ github.workspace }}/kernel/out/$ANDROID_VERSION-$KERNEL_VERSION/dist/Image" "${{ github.workspace }}/AnyKernel3/Image"
+        fi
+          exit 0
+        fi
+      if [ -f "${{ github.workspace }}/kernel/bazel-bin/common/kernel_aarch64/Image" ]; then
+        if [[ ${{ inputs.bypass }} == "true" ]]; then
+          cp "${{ github.workspace }}/kernel/bazel-bin/common/kernel_aarch64/Image" "${{ github.workspace }}/AnyKernel3/Bypass-Image"
+        else
+          cp "${{ github.workspace }}/kernel/bazel-bin/common/kernel_aarch64/Image" "${{ github.workspace }}/AnyKernel3/Image"
+        fi
+        exit 0
+      fi
+
+      exit 1
+
+  - name: 'Edit AnyKernel3 for Bypass Toggle'
+    shell: bash
+    if : ${{ inputs.bypass == 'true' }}
+    run: |
+      # Inject bypass toggle code into anykernel.sh
+      sed -i '/^# boot install$/i\
+      # Handle bypass image toggle\
+      if [ -f "ENABLE_BYPASS" ]; then\
+          if [ -f "Bypass-Image" ]; then\
+              mv Bypass-Image Image\
+              ui_print " " "  -> Using Bypass kernel image"\
+          else\
+              ui_print " " "  -> Bypass enabled but no Bypass-Image found, using regular Image if available"\
+          fi\
+      fi\
+      ' "${{ github.workspace }}/AnyKernel3/anykernel.sh"
+

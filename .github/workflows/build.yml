@@ -391,11 +391,6 @@ jobs:
         bypass: true
         version: ${{ inputs.version }}
 
-    - name: Prepare AnyKernel3 Zip
-      uses: ./.github/actions/prepare-anykernel3
-      with:
-        version: ${{ inputs.version }}
-
     - name: Upload Artifacts
       uses: actions/upload-artifact@v7
       with:
