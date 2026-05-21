@@ -2,11 +2,8 @@ name: 'Prepare AnyKernel3'
 description: 'Copies built Image into AnyKernel3 folder'
 
 inputs:
-  android_version:
+  version:
     description: 'Android version (e.g., android13)'
-    required: true
-  kernel_version:
-    description: 'Kernel version (e.g., 5.15)'
     required: true
 
 runs:
