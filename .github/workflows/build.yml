@@ -325,6 +325,9 @@ jobs:
         SOURCE_DATE_EPOCH: ${{ env.SOURCE_DATE_EPOCH }}
         KBUILD_BUILD_TIMESTAMP: ${{ env.KBUILD_BUILD_TIMESTAMP }}
       uses: ./.github/actions/build-kernel
+      with:
+        version: ${{ inputs.version }}
+        bypass: false
 
     - name: Get Cache Stats
       uses: ./.github/actions/cache-stats
@@ -384,6 +387,15 @@ jobs:
         cache_bucket: lto-cache
         compression_level: 9
         github_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build Kernel
+      env:
+        SOURCE_DATE_EPOCH: ${{ env.SOURCE_DATE_EPOCH }}
+        KBUILD_BUILD_TIMESTAMP: ${{ env.KBUILD_BUILD_TIMESTAMP }}
+      uses: ./.github/actions/build-kernel
+      with:
+        bypass: true
+        version: ${{ inputs.version }}
 
     - name: Prepare AnyKernel3 Zip
       uses: ./.github/actions/prepare-anykernel3

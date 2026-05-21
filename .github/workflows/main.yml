@@ -44,15 +44,6 @@ on:
           - NONE
           - FULL
         default: FULL
-      variant:
-        description: "Build Variant"
-        type: choice
-        options:
-          - All
-          - Normal
-          - Bypass
-          - Wild
-        default: Normal
       use_repo:
         description: "Use repo for downloading kernel source"
         type: boolean
@@ -69,7 +60,6 @@ jobs:
     with:
       config_file: .github/config/android12-5.10.json
       feature_set: ${{ inputs.feature_set || 'FULL' }}
-      variant: ${{ inputs.variant || 'Normal' }}
       use_repo: ${{ inputs.use_repo }}
     secrets: inherit
 
@@ -79,7 +69,6 @@ jobs:
     with:
       config_file: .github/config/android13-5.10.json
       feature_set: ${{ inputs.feature_set || 'FULL' }}
-      variant: ${{ inputs.variant || 'Normal' }}
       use_repo: ${{ inputs.use_repo }}
     secrets: inherit
 
@@ -89,7 +78,6 @@ jobs:
     with:
       config_file: .github/config/android13-5.15.json
       feature_set: ${{ inputs.feature_set || 'FULL' }}
-      variant: ${{ inputs.variant || 'Normal' }}
       use_repo: ${{ inputs.use_repo }}
     secrets: inherit
 
@@ -99,7 +87,6 @@ jobs:
     with:
       config_file: .github/config/android14-5.15.json
       feature_set: ${{ inputs.feature_set || 'FULL' }}
-      variant: ${{ inputs.variant || 'Normal' }}
       use_repo: ${{ inputs.use_repo }}
     secrets: inherit
 
@@ -109,7 +96,6 @@ jobs:
     with:
       config_file: .github/config/android14-6.1.json
       feature_set: ${{ inputs.feature_set || 'FULL' }}
-      variant: ${{ inputs.variant || 'Normal' }}
       use_repo: ${{ inputs.use_repo }}
     secrets: inherit
 
@@ -119,7 +105,6 @@ jobs:
     with:
       config_file: .github/config/android15-6.6.json
       feature_set: ${{ inputs.feature_set || 'FULL' }}
-      variant: ${{ inputs.variant || 'Normal' }}
       use_repo: ${{ inputs.use_repo }}
     secrets: inherit
 
@@ -129,7 +114,6 @@ jobs:
     with:
       config_file: .github/config/android16-6.12.json
       feature_set: ${{ inputs.feature_set || 'FULL' }}
-      variant: ${{ inputs.variant || 'Normal' }}
       use_repo: ${{ inputs.use_repo }}
     secrets: inherit
 
