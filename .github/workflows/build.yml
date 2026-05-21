@@ -314,7 +314,7 @@ jobs:
       with:
         clear_stats: true
 
-    - name: Build Kernel
+    - name: Build Normal Kernel
       env:
         SOURCE_DATE_EPOCH: ${{ env.SOURCE_DATE_EPOCH }}
         KBUILD_BUILD_TIMESTAMP: ${{ env.KBUILD_BUILD_TIMESTAMP }}
@@ -382,7 +382,7 @@ jobs:
         compression_level: 9
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Build Kernel
+    - name: Build Bypass Kernel
       env:
         SOURCE_DATE_EPOCH: ${{ env.SOURCE_DATE_EPOCH }}
         KBUILD_BUILD_TIMESTAMP: ${{ env.KBUILD_BUILD_TIMESTAMP }}
