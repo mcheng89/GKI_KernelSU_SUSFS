@@ -1,0 +1,91 @@
+name: LTS Download Speed Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark-download:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      max-parallel: 35
+      matrix:
+        branch:
+          - android12-5.10-lts
+          - android13-5.10-lts
+          - android13-5.15-lts
+          - android14-5.15-lts
+          - android14-6.1-lts
+          - android15-6.6-lts
+          - android16-6.12-lts
+        sync_mode:
+          - name: unset
+            mode: unset
+          - name: j4
+            mode: 4
+          - name: j8
+            mode: 8
+          - name: j16
+            mode: 16
+          - name: all
+            mode: all
+    name: ${{ matrix.branch }} / repo sync ${{ matrix.sync_mode.name }}
+    steps:
+      - name: Install repo tool
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL https://storage.googleapis.com/git-repo-downloads/repo -o "$HOME/.local/bin/repo"
+          chmod +x "$HOME/.local/bin/repo"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Benchmark repo sync
+        shell: bash
+        run: |
+          set -euo pipefail
+          workdir="$RUNNER_TEMP/kernel-speed-test/${{ matrix.branch }}/${{ matrix.sync_mode.name }}"
+          mkdir -p "$workdir"
+          cd "$workdir"
+
+          branch="common-${{ matrix.branch }}"
+          repo init -u https://android.googlesource.com/kernel/manifest -b "$branch" --depth=1
+
+          case "${{ matrix.sync_mode.mode }}" in
+            unset)
+              sync_cmd=(repo sync -c --no-tags --no-clone-bundle --optimized-fetch --retry-fetches=3)
+              ;;
+            4)
+              sync_cmd=(repo sync -c -j4 --no-tags --no-clone-bundle --optimized-fetch --retry-fetches=3)
+              ;;
+            8)
+              sync_cmd=(repo sync -c -j8 --no-tags --no-clone-bundle --optimized-fetch --retry-fetches=3)
+              ;;
+            16)
+              sync_cmd=(repo sync -c -j16 --no-tags --no-clone-bundle --optimized-fetch --retry-fetches=3)
+              ;;
+            all)
+              sync_cmd=(repo sync -c -j"$(nproc)" --no-tags --no-clone-bundle --optimized-fetch --retry-fetches=3)
+              ;;
+            *)
+              echo "Unknown sync mode: ${{ matrix.sync_mode.mode }}" >&2
+              exit 1
+              ;;
+          esac
+
+          start_ns=$(date +%s%N)
+          timeout 20m "${sync_cmd[@]}"
+          end_ns=$(date +%s%N)
+          elapsed_ms=$(( (end_ns - start_ns) / 1000000 ))
+
+          {
+            echo "## LTS download benchmark"
+            echo
+            echo "- Branch: \`${{ matrix.branch }}\`"
+            echo "- Sync mode: \`${{ matrix.sync_mode.name }}\`"
+            echo "- Elapsed: ${elapsed_ms} ms"
+          } >> "$GITHUB_STEP_SUMMARY"
