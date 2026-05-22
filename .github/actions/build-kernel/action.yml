@@ -82,7 +82,8 @@ runs:
             --lto=default \
             --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment \
             --disk_cache=/home/runner/.cache/bazel \
-            //common:kernel_aarch64
+            --dist_dir=dist \
+            //common:kernel_aarch64_dist
         else
           tools/bazel build \
             --config=fast \
@@ -91,7 +92,7 @@ runs:
             --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment \
             --disk_cache=/home/runner/.cache/bazel \
             --distdir=dist \
-            //common:kernel_aarch64
+            //common:kernel_aarch64_dist
         fi
         tools/bazel info output_base
       fi
@@ -118,11 +119,11 @@ runs:
         fi
           exit 0
         fi
-      if [ -f "${{ github.workspace }}/kernel/bazel-bin/common/kernel_aarch64/Image" ]; then
+      if [ -f "${{ github.workspace }}/kernel/dist/Image" ]; then
         if [[ ${{ inputs.bypass }} == "true" ]]; then
-          cp "${{ github.workspace }}/kernel/bazel-bin/common/kernel_aarch64/Image" "${{ github.workspace }}/AnyKernel3/Bypass-Image"
+          cp "${{ github.workspace }}/kernel/dist/Image" "${{ github.workspace }}/AnyKernel3/Bypass-Image"
         else
-          cp "${{ github.workspace }}/kernel/bazel-bin/common/kernel_aarch64/Image" "${{ github.workspace }}/AnyKernel3/Image"
+          cp "${{ github.workspace }}/kernel/dist/Image" "${{ github.workspace }}/AnyKernel3/Image"
         fi
         exit 0
       fi
