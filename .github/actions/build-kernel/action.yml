@@ -86,10 +86,6 @@ runs:
         tools/bazel info output_base
       fi
 
-      echo "Build completed. Output directory contents:"
-      ls
-      echo "Contents of out"
-      ls out
       echo "Contents of /home/runner/out"
       ls /home/runner/out
 
