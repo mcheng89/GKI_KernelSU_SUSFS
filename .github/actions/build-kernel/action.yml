@@ -57,10 +57,11 @@ runs:
       SKIP_MRPROPER=1
       EOF
 
-      export OUT_DIR="/home/runner/out"
+      mkdir -p /home/runner/out
 
       if [ -f "build/build.sh" ]; then
-        #SKIP_MRPROPER=1 \
+        #SKIP_MRPROPER=1 
+        OUT_DIR="/home/runner/out" \
         LTO=thin \
         GKI_DEFCONFIG_FRAGMENT="${GKI_DEFCONFIG_WRAPPER_PATH}" \
         GKI_BUILD_CONFIG_FRAGMENT="${GKI_BUILD_CONFIG_FRAGMENT_PATH}" \
@@ -91,7 +92,7 @@ runs:
             --lto=default \
             --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment \
             --disk_cache=/home/runner/.cache/bazel \
-            --dist_dir=dist \
+            --distdir=/home/runner/out \
             //common:kernel_aarch64_dist
         fi
         tools/bazel info output_base
@@ -105,19 +106,19 @@ runs:
     working-directory: ${{ github.workspace }}
     run: |
       set -euo pipefail
-      if [ -f "${{ github.workspace }}/kernel/out/${{ inputs.version }}/dist/Image" ]; then
+      if [ -f "/home/runner/out/${{ inputs.version }}/dist/Image" ]; then
         if [[ ${{ inputs.bypass }} == "true" ]]; then
-          cp "${{ github.workspace }}/kernel/out/${{ inputs.version }}/dist/Image" "${{ github.workspace }}/AnyKernel3/Bypass-Image"
+          cp "/home/runner/out/${{ inputs.version }}/dist/Image" "${{ github.workspace }}/AnyKernel3/Bypass-Image"
         else
-          cp "${{ github.workspace }}/kernel/out/${{ inputs.version }}/dist/Image" "${{ github.workspace }}/AnyKernel3/Image"
+          cp "/home/runner/out/${{ inputs.version }}/dist/Image" "${{ github.workspace }}/AnyKernel3/Image"
         fi
           exit 0
         fi
-      if [ -f "${{ github.workspace }}/kernel/dist/Image" ]; then
+      if [ -f "/home/runner/out/Image" ]; then
         if [[ ${{ inputs.bypass }} == "true" ]]; then
-          cp "${{ github.workspace }}/kernel/dist/Image" "${{ github.workspace }}/AnyKernel3/Bypass-Image"
+          cp "/home/runner/out/Image" "${{ github.workspace }}/AnyKernel3/Bypass-Image"
         else
-          cp "${{ github.workspace }}/kernel/dist/Image" "${{ github.workspace }}/AnyKernel3/Image"
+          cp "/home/runner/out/Image" "${{ github.workspace }}/AnyKernel3/Image"
         fi
         exit 0
       fi
