@@ -58,7 +58,7 @@ runs:
       EOF
 
       export OUT_DIR="/home/runner/out"
-      
+
       if [ -f "build/build.sh" ]; then
         #SKIP_MRPROPER=1 \
         LTO=thin \
@@ -76,10 +76,13 @@ runs:
         tools/bazel info output_base
         cp "${{ github.workspace }}/wild_gki.fragment" common/arch/arm64/configs/wild_gki.fragment
         tools/bazel build \
-          --linkopt="--thinlto-cache-dir=/home/runner/.ld_cache" \
-          --config=local \
+          #--linkopt="--thinlto-cache-dir=/home/runner/.ld_cache" \
+          --config=fast \
+          --config=stamp \
+          #--config=local \
+          --lto=default \
           --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment \
-          --disk_cache=/home/runner/.cache/bazel/disk \
+          --disk_cache=/home/runner/.cache/bazel \
           //common:kernel_aarch64
 
         tools/bazel info output_base
