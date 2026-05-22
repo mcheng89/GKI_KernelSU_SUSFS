@@ -22,7 +22,6 @@ runs:
   steps:
     - name: Apply Kernel Name Branding
       shell: bash
-      if: false
       working-directory: ${{ github.workspace }}/kernel/common
       run: |
         CONFIG_FRAGMENT="${{ github.workspace }}/wild_gki.fragment"
@@ -54,7 +53,6 @@ runs:
         #fi
 
     - name: Apply Kernel Configuration
-      if: ${{ inputs.variant == 'Wild' }}
       shell: bash
       run: |
         if grep -q '^CONFIG_LOCALVERSION=' "$DEFCONFIG"; then
