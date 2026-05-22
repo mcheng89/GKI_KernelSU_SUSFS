@@ -22,6 +22,7 @@ runs:
   steps:
     - name: Apply Kernel Name Branding
       shell: bash
+      if: false
       working-directory: ${{ github.workspace }}/kernel/common
       run: |
         CONFIG_FRAGMENT="${{ github.workspace }}/wild_gki.fragment"
@@ -54,7 +55,13 @@ runs:
 
     - name: Apply Kernel Configuration
       shell: bash
+      working-directory: ${{ github.workspace }}/kernel/common
       run: |
+        CONFIG_FRAGMENT="${{ github.workspace }}/wild_gki.fragment"
+        touch "$CONFIG_FRAGMENT"
+
+        DEFCONFIG="${{ github.workspace }}/kernel/common/arch/arm64/configs/gki_defconfig"
+        
         if grep -q '^CONFIG_LOCALVERSION=' "$DEFCONFIG"; then
           LOCALVERSION_VALUE="$(grep -m1 '^CONFIG_LOCALVERSION=' "$DEFCONFIG" | sed -E 's/^CONFIG_LOCALVERSION="?([^"]*)"?$/\1/')"
           echo "CONFIG_LOCALVERSION=\"${LOCALVERSION_VALUE}-Wild\"" >> "$CONFIG_FRAGMENT"
