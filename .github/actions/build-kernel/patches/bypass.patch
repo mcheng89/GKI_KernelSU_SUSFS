@@ -9,9 +9,9 @@ index 35b6e59..e2bcb62 100755
 +handle_input() {
 +    while true; do
 +        case $(getevent -lqc "/dev/input/event2" 2>/dev/null | grep -m1 'DOWN') in
-+            *KEY_VOLUMEUP*) echo "normal"; return ;;
-+            *KEY_VOLUMEDOWN*) echo "bypass"; return ;;
 +            *KEY_POWER*) echo "cancel"; return ;;
++            *KEY_VOLUMEUP*) echo "bypass"; return ;;
++            *KEY_VOLUMEDOWN*) echo "normal"; return ;;
 +        esac
 +    done
 +}
@@ -23,8 +23,8 @@ index 35b6e59..e2bcb62 100755
 +    ui_print "  -> Use it only when Normal fails to boot due to kernel module incompatibilities"
 +    ui_print " "
 +    ui_print "  -> Choose Kernel Image:"
-+    ui_print "  -> VOL+ = Normal"
-+    ui_print "  -> VOL- = Bypass"
++    ui_print "  -> VOL+ = Bypass"
++    ui_print "  -> VOL- = Normal"
 +    ui_print "  -> POWER = Cancel"
 +    ui_print " "
 +
