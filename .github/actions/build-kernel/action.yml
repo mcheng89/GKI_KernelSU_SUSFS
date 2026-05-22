@@ -83,7 +83,7 @@ runs:
             --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment \
             --disk_cache=/home/runner/.cache/bazel \
             //common:kernel_aarch64_dist \
-            -- --dist_dir=dist
+            -- --distdir=dist
         else
           tools/bazel build \
             --config=fast \
@@ -92,7 +92,7 @@ runs:
             --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment \
             --disk_cache=/home/runner/.cache/bazel \
             //common:kernel_aarch64_dist \
-            -- --distdir=dist
+            -- --dist_dir=dist
         fi
         tools/bazel info output_base
       fi
