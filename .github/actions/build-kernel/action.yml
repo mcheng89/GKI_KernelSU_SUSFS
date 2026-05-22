@@ -86,14 +86,13 @@ runs:
             //common:kernel_aarch64_dist \
             -- --distdir=dist
         else
-          tools/bazel build \
+          tools/bazel --distdir=/home/runner/out build \
             --config=fast \
             --config=stamp \
             --lto=default \
             --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment \
             --disk_cache=/home/runner/.cache/bazel \
-            --distdir=/home/runner/out \
-            //common:kernel_aarch64_dist
+            //common:kernel_aarch64_dist 
         fi
         tools/bazel info output_base
       fi
