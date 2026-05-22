@@ -83,7 +83,6 @@ runs:
           --disk_cache=/home/runner/.cache/bazel \
           //common:kernel_aarch64_dist \
           -- --dist_dir=/home/runner/out
-        fi
         tools/bazel info output_base
       fi
 
