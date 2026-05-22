@@ -12,16 +12,17 @@ jobs:
     timeout-minutes: 180
     strategy:
       fail-fast: false
-      max-parallel: 35
+      max-parallel: 30
       matrix:
         branch:
-          - android12-5.10-lts
-          - android13-5.10-lts
-          - android13-5.15-lts
-          - android14-5.15-lts
-          - android14-6.1-lts
-          - android15-6.6-lts
           - android16-6.12-lts
+        sync_profile:
+          - name: baseline
+          - name: no-tags
+          - name: force-sync
+          - name: fast-fetch
+          - name: retry-only
+          - name: full-mix
         sync_mode:
           - name: unset
             mode: unset
@@ -33,7 +34,7 @@ jobs:
             mode: 16
           - name: all
             mode: all
-    name: ${{ matrix.branch }} / repo sync ${{ matrix.sync_mode.name }}
+    name: ${{ matrix.branch }} / ${{ matrix.sync_profile.name }} / repo sync ${{ matrix.sync_mode.name }}
     steps:
       - name: Install repo tool
         shell: bash
@@ -55,21 +56,46 @@ jobs:
           branch="common-${{ matrix.branch }}"
           repo init -u https://android.googlesource.com/kernel/manifest -b "$branch" --depth=1
 
+          sync_cmd=(repo sync -c)
+
+          case "${{ matrix.sync_profile.name }}" in
+            baseline)
+              ;;
+            no-tags)
+              sync_cmd+=(--no-tags)
+              ;;
+            force-sync)
+              sync_cmd+=(--no-tags --force-sync)
+              ;;
+            fast-fetch)
+              sync_cmd+=(--no-clone-bundle --optimized-fetch)
+              ;;
+            retry-only)
+              sync_cmd+=(--no-tags --retry-fetches=3)
+              ;;
+            full-mix)
+              sync_cmd+=(--fail-fast --no-tags --force-sync --no-clone-bundle --optimized-fetch --retry-fetches=3)
+              ;;
+            *)
+              echo "Unknown sync profile: ${{ matrix.sync_profile.name }}" >&2
+              exit 1
+              ;;
+          esac
+
           case "${{ matrix.sync_mode.mode }}" in
             unset)
-              sync_cmd=(repo sync -c --no-tags --no-clone-bundle --optimized-fetch --retry-fetches=3)
               ;;
             4)
-              sync_cmd=(repo sync -c -j4 --no-tags --no-clone-bundle --optimized-fetch --retry-fetches=3)
+              sync_cmd+=(-j4)
               ;;
             8)
-              sync_cmd=(repo sync -c -j8 --no-tags --no-clone-bundle --optimized-fetch --retry-fetches=3)
+              sync_cmd+=(-j8)
               ;;
             16)
-              sync_cmd=(repo sync -c -j16 --no-tags --no-clone-bundle --optimized-fetch --retry-fetches=3)
+              sync_cmd+=(-j16)
               ;;
             all)
-              sync_cmd=(repo sync -c -j"$(nproc)" --no-tags --no-clone-bundle --optimized-fetch --retry-fetches=3)
+              sync_cmd+=(-j"$(nproc)")
               ;;
             *)
               echo "Unknown sync mode: ${{ matrix.sync_mode.mode }}" >&2
@@ -86,6 +112,7 @@ jobs:
             echo "## LTS download benchmark"
             echo
             echo "- Branch: \`${{ matrix.branch }}\`"
+            echo "- Profile: \`${{ matrix.sync_profile.name }}\`"
             echo "- Sync mode: \`${{ matrix.sync_mode.name }}\`"
             echo "- Elapsed: ${elapsed_ms} ms"
           } >> "$GITHUB_STEP_SUMMARY"
