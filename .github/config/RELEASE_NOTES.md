@@ -97,17 +97,17 @@ Install the KernelSU‑Next Manager APK, same version as mentioned in the releas
 Open the KernelSU‑Next app.
 Reboot the device if you performed any cleanup in step 2
 
-## Force Load Kernel Modules — Bypass flashing with `Bypass-Image`
+## Force Load Kernel Modules (Bypass) — flashing with `Bypass-Image`
 
 > [!IMPORTANT]
-> Most users do not need this. Try the normal installer first. This option does not bypass root-detection systems — it only replaces the kernel image used during flashing for recovery/compatibility workarounds.
+> Most users do not need this. Try the `Normal` `Image` first. This option does not help bypass root-detection systems — it only replaces the kernel image used during flashing for compatibility workarounds.
 
-**How to enable (new workflow):**
-- Enable the bypass behavior by setting `do.flash_bypass=1` in the package's `AnyKernel3/anykernel.sh`.
+**How to enable:**
+- When flashing, the installer will ask the user what they want to flash, `Normal` or `Bypass`. 
 
 **Behavior:**
-- When `do.flash_bypass=1`, the installer will look for `Bypass-Image` in the package root. If found, it will move `Bypass-Image` to replace the usual `Image` file prior to performing version checks and flashing.
-- If `do.flash_bypass=1` is set but no `Bypass-Image` is found, the installer will abort with an error to avoid accidental forced flashing of an unintended image.
+- If `Bypass` is chosen it will move `Bypass-Image` to replace the usual `Normal` `Image` file prior to performing version checks and flashing.
+- If `Bypass` is chosen and `Bypass-Image` is not found, the installer will abort with an error to avoid accidental forced flashing of an unintended image.
 
 **Why / When to use:**
-- Use this only when a normal flash fails to boot due to kernel module or binary incompatibilities and you have a known-good alternate image to try.
+- Use this only when a `Normal` flash fails to boot due to kernel module incompatibilities.
