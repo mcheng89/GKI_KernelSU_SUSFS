@@ -1,10 +1,10 @@
 diff --git a/anykernel.sh b/anykernel.sh
-index 35b6e59..aecf80b 100755
+index 35b6e59..e2bcb62 100755
 --- a/anykernel.sh
 +++ b/anykernel.sh
-@@ -33,6 +33,50 @@ no_magisk_check=1
- # import functions/variables and setup patching - see for reference (DO NOT REMOVE)
- . tools/ak3-core.sh
+@@ -45,6 +45,52 @@ esac
+ ui_print " " "  -> Wild Kernels Supported: $ksu_supported"
+ $ksu_supported || abort "  -> Non-GKI device, abort."
  
 +handle_input() {
 +    while true; do
@@ -50,13 +50,6 @@ index 35b6e59..aecf80b 100755
 +    done
 +}
 +
- # GKI check
- kernel_version=$(cat /proc/version | awk -F '-' '{print $1}' | awk '{print $3}')
- case $kernel_version in
-@@ -45,6 +89,8 @@ esac
- ui_print " " "  -> Wild Kernels Supported: $ksu_supported"
- $ksu_supported || abort "  -> Non-GKI device, abort."
- 
 +choose_flash_mode
 +
  # boot install

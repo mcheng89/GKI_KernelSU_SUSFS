@@ -91,7 +91,7 @@ runs:
     working-directory: ${{ github.workspace }}
     run: |
       set -euo pipefail
-      PATCH_FILE="${{ github.action_path }}/patches/anykernel-flash-mode-menu.patch"
+      PATCH_FILE="${{ github.action_path }}/patches/bypass.patch"
       if [ -f "$PATCH_FILE" ]; then
         patch -d "${{ github.workspace }}/AnyKernel3" -p1 < "$PATCH_FILE"
       fi
