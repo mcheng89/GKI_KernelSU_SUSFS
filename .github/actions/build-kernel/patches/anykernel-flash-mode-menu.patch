@@ -3,8 +3,7 @@ index 35b6e59..aecf80b 100755
 --- a/anykernel.sh
 +++ b/anykernel.sh
 @@ -33,6 +33,50 @@ no_magisk_check=1
- # import functions/variables and setup patching - see for reference (DO NOT REM
-OVE)
+ # import functions/variables and setup patching - see for reference (DO NOT REMOVE)
  . tools/ak3-core.sh
  
 +handle_input() {

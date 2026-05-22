@@ -71,7 +71,6 @@ runs:
         LD="${{ github.workspace }}/kernel/common/ld-wrapper" \
         HOSTLD="${{ github.workspace }}/kernel/common/ld-wrapper"
       else
-        
         tools/bazel info output_base
         cp "${{ github.workspace }}/wild_gki.fragment" common/arch/arm64/configs/wild_gki.fragment
         tools/bazel build \
