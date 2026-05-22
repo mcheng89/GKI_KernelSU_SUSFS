@@ -88,6 +88,7 @@ runs:
 
   - name: 'Gather Build Artifacts'
     shell: bash
+    if: inputs.bypass == true
     working-directory: ${{ github.workspace }}
     run: |
       set -euo pipefail
