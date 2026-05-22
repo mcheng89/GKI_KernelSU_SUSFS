@@ -57,6 +57,8 @@ runs:
       SKIP_MRPROPER=1
       EOF
 
+      export OUT_DIR="/home/runner/out"
+      
       if [ -f "build/build.sh" ]; then
         #SKIP_MRPROPER=1 \
         LTO=thin \
