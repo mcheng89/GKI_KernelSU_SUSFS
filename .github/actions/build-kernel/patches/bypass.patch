@@ -7,13 +7,8 @@ index 35b6e59..e2bcb62 100755
  $ksu_supported || abort "  -> Non-GKI device, abort."
  
 +handle_input() {
-+    # Listen for the first key DOWN event across input devices.
-+    # Some recoveries (OrangeFox) expose different /dev/input/eventN numbers,
-+    # so avoid hardcoding the node and read from all devices instead.
 +    while true; do
-+        # getevent with no device typically listens to all input devices in recovery
-+        ev=$(getevent -lqc 2>/dev/null | grep -m1 'DOWN' || true)
-+        case "$ev" in
++        case $(getevent -lqc 2>/dev/null | grep -m1 'DOWN') in
 +            *KEY_POWER*) echo "cancel"; return ;;
 +            *KEY_VOLUMEUP*) echo "bypass"; return ;;
 +            *KEY_VOLUMEDOWN*) echo "normal"; return ;;
@@ -23,15 +18,15 @@ index 35b6e59..e2bcb62 100755
 +
 +choose_flash_mode() {
 +    ui_print " "
-+    ui_print "  -> Most users do not need this; try Normal first"
-+    ui_print "  -> This does not help bypass root detection; it only swaps the Image for compatibility workarounds"
-+    ui_print "  -> Use it only when Normal fails to boot due to kernel module incompatibilities"
++    ui_print "  -> Most users do not need Bypass; try Normal first! This does not help bypass root detection; it only swaps the Image for compatibility workarounds! Use it only when Normal fails to boot due to kernel module incompatibilities!"
 +    ui_print " "
 +    ui_print "  -> Choose Kernel Image:"
-+    ui_print "  -> VOL+ = Bypass"
-+    ui_print "  -> VOL- = Normal"
-+    ui_print "  -> POWER = Cancel"
 +    ui_print " "
++    ui_print "  -> VOL+ = Bypass"
++    ui_print " "
++    ui_print "  -> VOL- = Normal"
++    ui_print " "
++    ui_print "  -> POWER = Cancel"
 +
 +    while true; do
 +        case $(handle_input) in
