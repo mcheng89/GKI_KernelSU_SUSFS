@@ -7,8 +7,13 @@ index 35b6e59..e2bcb62 100755
  $ksu_supported || abort "  -> Non-GKI device, abort."
  
 +handle_input() {
++    # Listen for the first key DOWN event across input devices.
++    # Some recoveries (OrangeFox) expose different /dev/input/eventN numbers,
++    # so avoid hardcoding the node and read from all devices instead.
 +    while true; do
-+        case $(getevent -lqc "/dev/input/event2" 2>/dev/null | grep -m1 'DOWN') in
++        # getevent with no device typically listens to all input devices in recovery
++        ev=$(getevent -lqc 2>/dev/null | grep -m1 'DOWN' || true)
++        case "$ev" in
 +            *KEY_POWER*) echo "cancel"; return ;;
 +            *KEY_VOLUMEUP*) echo "bypass"; return ;;
 +            *KEY_VOLUMEDOWN*) echo "normal"; return ;;
