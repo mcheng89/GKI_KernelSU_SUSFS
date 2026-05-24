@@ -1,4 +1,5 @@
 name: 'Save Cache'
+description: 'Archive, split if necessary, and upload cache to GitHub Releases for later retrieval.'
 
 inputs:
   cache_path:

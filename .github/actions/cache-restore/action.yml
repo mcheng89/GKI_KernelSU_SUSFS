@@ -1,5 +1,5 @@
 name: 'Restore Cache'
-description: 'Restores cache from GitHub Releases. Supports both single and multiple cache paths/keys/buckets.'
+description: 'Archive, split if necessary, and upload cache to GitHub Releases for later retrieval.'
 
 inputs:
   cache_path:
