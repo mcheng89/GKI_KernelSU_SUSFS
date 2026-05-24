@@ -82,7 +82,7 @@ runs:
             [ -z "$KEY" ] && continue
             echo "::group:: Searching Prefix: $KEY"
             
-            MATCH=$(echo "$ALL_ASSETS" | grep "^cache-$KEY" | sort -r | head -n 1 || true)
+            MATCH=$(echo "$ALL_ASSETS" | grep -F "cache-$KEY" | sort -r | head -n 1 || true)
             
             if [ -z "$MATCH" ]; then
                 echo "Not found."
@@ -91,7 +91,13 @@ runs:
             fi
             
             BASE_FILENAME=$(echo "$MATCH" | sed -E 's/\.(tzst|tar)(\.part[a-z]{2})?$//')
-            EXT=$(echo "$MATCH" | grep -oP '\\.(tzst|tar)' | head -n 1)
+            EXT=$(printf '%s\n' "$MATCH" | grep -oE '\.(tzst|tar)' | head -n 1 || true)
+
+            if [ -z "$EXT" ]; then
+              echo "⚠️ Could not determine archive extension for '$MATCH'."
+              echo "::endgroup::"
+              continue
+            fi
             
             [[ "$MATCH" == *".part"* ]] && IS_SPLIT=true || IS_SPLIT=false
             [ "$EXT" = ".tzst" ] && COMPRESSED=true || COMPRESSED=false
@@ -125,7 +131,7 @@ runs:
             if [ "$IS_SPLIT" = "true" ]; then
               for part in {a..z}{a..z}; do
                 PART_NAME="$BASE_FILENAME$EXT.part$part"
-                if echo "$ALL_ASSETS" | grep -q "^$PART_NAME$"; then
+                if echo "$ALL_ASSETS" | grep -Fxq "$PART_NAME"; then
                   if ! download_asset "$PART_NAME" "$BASE_URL/$PART_NAME"; then
                     echo "::error::Failed to download $PART_NAME after multiple retries."
                     exit 1
