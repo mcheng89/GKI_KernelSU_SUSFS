@@ -18,6 +18,11 @@ inputs:
     description: 'The tag name for the release (e.g., general-cache)'
     required: true
     default: 'general-cache'
+  compression_level:
+    description: 'Accepted for compatibility with callers; restore ignores this value.'
+    required: false
+    type: number
+    default: 6
   debug:
     description: 'Enable Logs'
     required: false
@@ -151,7 +156,7 @@ runs:
             
             if [ "$IS_SPLIT" = "true" ]; then
               PARTS=$(ls "$FINAL_ARCHIVE.part"* | sort)
-              if [ "$COMPRESSED" = ""true" ]; then
+              if [ "$COMPRESSED" = "true" ]; then
                 extract_cache "cat $PARTS | tar -I 'zstd -d -T0' -xvf - -C '$EXTRACT_DIR'"
               else
                 extract_cache "cat $PARTS | tar -xvf - -C '$EXTRACT_DIR'"
