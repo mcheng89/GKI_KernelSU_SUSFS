@@ -1,5 +1,5 @@
---- a/AnyKernel3/anykernel.sh
-+++ b/AnyKernel3/anykernel.sh
+--- a/anykernel.sh
++++ b/anykernel.sh
 @@ -46,6 +46,48 @@
  $ksu_supported || abort "  -> Non-GKI device, abort."
 
