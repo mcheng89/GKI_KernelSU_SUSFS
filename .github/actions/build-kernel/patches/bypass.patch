@@ -1,8 +1,11 @@
+diff --git a/anykernel.sh b/anykernel.sh
+index 35b6e59..7936667 100755
 --- a/anykernel.sh
 +++ b/anykernel.sh
-@@ -46,6 +46,48 @@
+@@ -45,6 +45,47 @@ esac
+ ui_print " " "  -> Wild Kernels Supported: $ksu_supported"
  $ksu_supported || abort "  -> Non-GKI device, abort."
-
+ 
 +handle_input() {
 +    /system/bin/getevent -lq 2>/dev/null | while IFS= read -r line; do
 +        case "$line" in
@@ -33,7 +36,7 @@
 +                    ui_print "  -> Using Bypass-Image for this flash"
 +                    return 0
 +                fi
-+                abort "  -> ERROR: Bypass-Image not found. Abort."
++               abort "  -> ERROR: Bypass-Image not found. Abort."
 +                ;;
 +            cancel)
 +                abort "  -> Cancelled by POWER button. Abort."
@@ -45,4 +48,5 @@
 +choose_flash_mode
 +
  # boot install
+ split_boot
  
