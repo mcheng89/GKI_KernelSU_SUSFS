@@ -14,11 +14,11 @@
 +}
 +
 +choose_flash_mode() {
-+    ui_print " "
 +    ui_print "  -> Most users do not need Bypass; try Normal first!"
-+    ui_print "  -> This only swaps the Image for compatibility workarounds."
-+    ui_print "  -> VOL+ = Bypass | VOL- = Normal | POWER = Cancel"
-+    ui_print " "
++    ui_print "  -> This only swaps the Image for compatibility workarounds, this doesn't help with hiding root."
++    ui_print "  -> VOL+ = Bypass'
++    ui_print "  -> VOL- = Normal"
++    ui_print "  -> POWER = Cancel"
 +
 +    while true; do
 +        case $(handle_input) in
