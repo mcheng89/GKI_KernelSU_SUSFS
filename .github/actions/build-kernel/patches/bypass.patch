@@ -19,7 +19,7 @@ index 35b6e59..7936667 100755
 +choose_flash_mode() {
 +    ui_print "  -> Most users do not need Bypass; try Normal first!"
 +    ui_print "  -> This only swaps the Image for compatibility workarounds, this doesn't help with hiding root."
-+    ui_print "  -> VOL+ = Bypass'
++    ui_print "  -> VOL+ = Bypass"
 +    ui_print "  -> VOL- = Normal"
 +    ui_print "  -> POWER = Cancel"
 +
