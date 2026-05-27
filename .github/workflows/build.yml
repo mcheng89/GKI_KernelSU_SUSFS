@@ -41,20 +41,20 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v5
 
-
     - name: 🧹 Emergency Disk Cleanup
+      if: false
       uses: ./.github/actions/disk-cleanup
 
     - name: Free Disk Space
-      if: false
+      if: true
       uses: endersonmenezes/free-disk-space@v3  # Use @main for latest, @v3 for stable
       with:
         remove_android: true
         remove_dotnet: true
         remove_haskell: true
         remove_tool_cache: true
-        #remove_packages: "azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox postgresql* temurin-* *llvm* mysql* dotnet-sdk-*"
-        #remove_packages_one_command: true
+        remove_packages: "azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox postgresql* temurin-* *llvm* mysql* dotnet-sdk-*"
+        remove_packages_one_command: true
         remove_folders: "/usr/share/swift /usr/share/miniconda /usr/share/az* /usr/local/lib/node_modules /usr/local/share/chromium /usr/local/share/powershell /usr/local/julia /usr/local/aws-cli /usr/local/aws-sam-cli /usr/share/gradle"
         rm_cmd: "rmz"  # Use 'rmz' for faster deletion (default: 'rm')
         rmz_version: "3.1.1"  # Required when rm_cmd is 'rmz'
@@ -63,7 +63,7 @@ jobs:
     - name: Setup more Swap (for LTO)
       uses: thejerrybao/setup-swap-space@v1   # or pierotofy/set-swap-space
       with:
-        swap-size-gb: 16          # 10-24 GB is common for heavy LTO
+        swap-size-gb: 10          # 10-24 GB is common for heavy LTO
         # swap-space-path: /mnt/swapfile   # optional
 
     - name: Setup Build Environment
@@ -264,7 +264,6 @@ jobs:
 
     - name: Restore bazel-cache
       id: restore-bazel
-      if: false
       uses: ./.github/actions/cache-restore
       with:
         cache_path: /home/runner/.cache/bazel
@@ -277,7 +276,6 @@ jobs:
 
     - name: Restore lto-cache (bazel versions)
       id: restore-lto-bazel
-      if: false
       uses: ./.github/actions/cache-restore
       with:
         cache_path: /home/runner/.ld_cache
@@ -289,7 +287,6 @@ jobs:
           ${{ inputs.android_version }}-${{ inputs.kernel_version }}-
 
     - name: Check cache hit
-      if: false
       run: |
         echo "Cache restore status:"        CCACHE_HIT="${{ steps.restore-ccache.outputs.cache-hit || 'skipped' }}"
         LTO_CCACHE_HIT="${{ steps.restore-lto-ccache.outputs.cache-hit || 'skipped' }}"
@@ -301,7 +298,6 @@ jobs:
         echo "  lto (bazel versions): $LTO_BAZEL_HIT"
 
     - name: Get Cache Stats
-      if: false
       uses: ./.github/actions/cache-stats
       with:
         clear_stats: true
@@ -316,13 +312,11 @@ jobs:
         bypass: false
 
     - name: Get Cache Stats
-      if: false
       uses: ./.github/actions/cache-stats
       with:
         clear_stats: false
 
     - name: Save ccache
-      if: false
       uses: ./.github/actions/cache-save
       with:
         cache_path: /home/runner/.ccache
@@ -331,8 +325,7 @@ jobs:
         compression_level: 9
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Save lto-cache (ccache versions)
-      if: false
+    - name: Save lto-cache
       uses: ./.github/actions/cache-save
       with:
         cache_path: /home/runner/.ld_cache
@@ -342,22 +335,11 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Save bazel-cache
-      if: false
       uses: ./.github/actions/cache-save
       with:
         cache_path: /home/runner/.cache/bazel
         cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}
         cache_bucket: bazel-cache
-        compression_level: 9
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Save lto-cache (bazel versions)
-      if: false
-      uses: ./.github/actions/cache-save
-      with:
-        cache_path: /home/runner/.ld_cache
-        cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}
-        cache_bucket: lto-cache
         compression_level: 9
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
