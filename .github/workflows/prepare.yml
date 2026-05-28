@@ -1,4 +1,7 @@
 name: Prepare and Build
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 
 on:
   workflow_call:
