@@ -199,6 +199,7 @@ jobs:
         variant: ${{ inputs.variant }}
         kernel_version: ${{ inputs.kernel_version }}
         android_version: ${{ inputs.android_version }}
+        version: ${{ inputs.version }}
         sublevel: ${{ steps.extract.outputs.sublevel }}
 
     - name: Remove Protected Exports
