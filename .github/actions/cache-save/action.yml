@@ -1,168 +1,172 @@
-name: 'Save Cache'
-description: 'Archive, split if necessary, and upload cache to GitHub Releases for later retrieval.'
+name: 'Restore Cache'
+description: ""
 
 inputs:
   cache_path:
-    description: 'Path where cache is saved'
+    description: 'Path where cache should be restored'
     required: true
     type: string
   cache_key:
-    description: 'Unique key for the cache'
+    description: 'Primary key to restore cache'
     required: true
     type: string
+  restore_keys:
+    description: 'Multiline list of keys (fallback prefixes)'
+    required: false
+    type: string
+    default: ""
   cache_bucket:
     description: 'The tag name for the release (e.g., general-cache)'
     required: true
     default: 'general-cache'
-  github_token:
-    description: 'GitHub Token'
-    required: true
-  compression_level:
-    description: 'Compression level (0-9). 0 = No compression, 1 = Fast, 19 = Best.'
-    required: false
-    type: number
-    default: 6
-  working_dir:
-    description: 'Path where .git folder exists (use only if you clone multiple repos)'
-    required: false
-    type: string
-  debug:
-    description: 'Enable Logs'
-    required: false
-    type: boolean
-    default: false
 
 runs:
   using: 'composite'
   steps:
-    - name: Archive, Split, and Upload Cache
+    - name: Detect and Download Cache
       shell: bash
       env:
-        GH_TOKEN: ${{ inputs.github_token }}
         TARGET_REPO: "${{ github.repository }}"
       run: |
-        # Archive, Split, and Upload Cache
+        # Detect and Download Cache
         if [ "${{ inputs.debug }}" = "true" ]; then set -x; fi
         
-        if [ "${{ inputs.working_dir }}" != "" ]; then 
-          cd "${{ inputs.working_dir }}"
-        fi
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        cd "$GITHUB_WORKSPACE"
         
         TAG_NAME="${{ inputs.cache_bucket }}"
-        BASE_FILENAME="cache-${{ inputs.cache_key }}"
+        BASE_URL="https://github.com/${TARGET_REPO}/releases/download/$TAG_NAME"
+        ASSETS_URL="https://github.com/${TARGET_REPO}/releases/expanded_assets/$TAG_NAME"
         
-        if [ "${{ inputs.compression_level }}" -eq 0 ]; then
-          FILENAME="$BASE_FILENAME.tar"
-        else
-          FILENAME="$BASE_FILENAME.tzst"
+        ARIA2_OPTS=(
+          "-x16" "-s16" "-k1M" "-j5" "--file-allocation=none"
+          "--header=User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+          "--header=Accept: */*"
+          "--header=Connection: keep-alive"
+        )
+        
+        if [ "${{ inputs.debug }}" != "true" ]; then
+          ARIA2_OPTS+=("--quiet" "--summary-interval=0" "--console-log-level=error")
         fi
         
-        echo "::group:: Checking Release State"
+        echo "::group:: Fetching Asset List"
+        HTTP_RESPONSE=$(curl -sL -A "Mozilla/5.0" -w "%{http_code}" "$ASSETS_URL" -o assets.html || echo "404")
         
-        git fetch --tags --force
-        
-        if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
-          echo "Tag '$TAG_NAME' not found. Creating backdated release..."
-          GIT_COMMITTER_DATE="2015-01-01T12:00:00" git tag -a "$TAG_NAME" -m "General Cache Storage"
-          if git push origin "$TAG_NAME" --force; then
-            gh release create "$TAG_NAME" --title "General Cache" --notes "Automated storage for build assets" --repo "$TARGET_REPO" || true
-          else
-            echo "Push failed, tag might have been created by a parallel job. Continuing..."
-          fi
+        if [ "$HTTP_RESPONSE" -eq 200 ]; then
+          ALL_ASSETS=$(grep -oP "download/$TAG_NAME/\K[^\"' ]+" assets.html | sort -u || echo "")
         else
-          echo "Release '$TAG_NAME' already exists. Ready for upload."
+          echo "Status $HTTP_RESPONSE: Failed to fetch assets from scraper endpoint."
+          ALL_ASSETS=""
         fi
-        echo "::endgroup::"
+        rm -f assets.html
         
-        echo "::group:: Archiving Path"
-        echo "Target: ${{ inputs.cache_path }}"
-        
-        if [ ! -d "${{ inputs.cache_path }}" ] && [ ! -f "${{ inputs.cache_path }}" ]; then
-          echo "⚠️ Target path not found. Skipping cache save."
+        if [ -z "$ALL_ASSETS" ]; then
+          echo "No assets found in bucket '$TAG_NAME'. Skipping search."
           echo "::endgroup::"
         else
-          DIR_NAME=$(dirname "${{ inputs.cache_path }}")
-          BASE_NAME=$(basename "${{ inputs.cache_path }}")
-          
-          if [ "${{ inputs.debug }}" = "true" ]; then
-            if [ "${{ inputs.compression_level }}" -eq 0 ]; then
-              tar --posix -h -cvf "$FILENAME" -C "$DIR_NAME" "$BASE_NAME"
-            else
-              tar --posix -h -I "zstd -T0 -${{ inputs.compression_level }}" -cvf "$FILENAME" -C "$DIR_NAME" "$BASE_NAME"
-            fi
-          else
-            if [ "${{ inputs.compression_level }}" -eq 0 ]; then
-              tar --posix -h -cvf "$FILENAME" -C "$DIR_NAME" "$BASE_NAME" > /dev/null 2>&1
-            else
-              tar --posix -h -I "zstd -T0 -${{ inputs.compression_level }}" -cvf "$FILENAME" -C "$DIR_NAME" "$BASE_NAME" > /dev/null 2>&1
-            fi
-          fi
-          
-          FILE_SIZE=$(stat -c%s "$FILENAME")
-          echo "Archive created: $FILENAME ($FILE_SIZE bytes)"
+          echo "Successfully fetched asset list. Has $(echo "$ALL_ASSETS" | wc -l) assets."
           echo "::endgroup::"
           
-          echo "::group:: Uploading Assets"
-          MAX_SIZE=2000000000 # ~1.86GB
+          SEARCH_LIST=$(printf "%s\n%s" "${{ inputs.cache_key }}" "${{ inputs.restore_keys }}" | sed '/^$/d')
           
-          upload_with_retry() {
-            local file=$1
-            local max_attempts=3
-            for ((i=1; i<=max_attempts; i++)); do
-              echo "  Attempt $i for $file..."
-              local upload_log
-              upload_log=$(mktemp)
+          FOUND=false
+          while read -r KEY; do
+            [ -z "$KEY" ] && continue
+            echo "::group:: Searching Prefix: $KEY"
+            
+            MATCH=$(echo "$ALL_ASSETS" | grep "^cache-$KEY" | sort -r | head -n 1 || true)
+            
+            if [ -z "$MATCH" ]; then
+                echo "Not found."
+                echo "::endgroup::"
+                continue
+            fi
+            
+            BASE_FILENAME=$(echo "$MATCH" | sed -E 's/\.(tzst|tar)(\.part[a-z]{2})?$//')
+            EXT=$(echo "$MATCH" | grep -oP '\.(tzst|tar)' | head -n 1)
+            
+            [[ "$MATCH" == *".part"* ]] && IS_SPLIT=true || IS_SPLIT=false
+            [ "$EXT" = ".tzst" ] && COMPRESSED=true || COMPRESSED=false
+            FOUND=true
+            
+            echo "✅ Hit! Restoring $BASE_FILENAME$EXT"
+            echo "::endgroup::"
+            
+            echo "::group:: Downloading Cache"
+            
+            download_asset() {
+              local filename="$1"
+              local url="$2"
+              local max_retries=3
+              local attempt=1
               
-              if [ "${{ inputs.debug }}" = "true" ]; then
-                if timeout 10m gh release upload "$TAG_NAME" "$file" --clobber --repo "$TARGET_REPO" > >(tee "$upload_log") 2> >(tee -a "$upload_log" >&2); then
-                  rm -f "$upload_log"
-                  echo "  Successfully uploaded $file"
+              while [ $attempt -le $max_retries ]; do
+                echo "  Attempt $attempt: Downloading $filename..."
+                
+                if timeout 10m aria2c "${ARIA2_OPTS[@]}" --retry-wait=10 --max-tries=10 -o "$filename" "$url"; then
                   return 0
                 fi
-              else
-                if timeout 10m gh release upload "$TAG_NAME" "$file" --clobber --repo "$TARGET_REPO" > "$upload_log" 2>&1; then
-                  rm -f "$upload_log"
-                  echo "  Successfully uploaded $file"
-                  return 0
-                fi
-              fi
-              
-              local exit_code=$?
-              echo "  ⚠ Attempt $i failed with exit code $exit_code."
-              echo "  └─ Upload output for $file:"
-              sed 's/^/    /' "$upload_log" || true
-              rm -f "$upload_log"
-              if [ "$exit_code" -eq 124 ]; then
-                echo "  ⚠ Attempt $i timed out after 10m. Retrying..."
-              else
-                echo "  ⚠ Attempt $i failed. Retrying..."
-              fi
-              sleep 5
-            done
-            return 1
-          }
-          
-          if [ "$FILE_SIZE" -gt "$MAX_SIZE" ]; then
-            echo "⚠ File > 2GB. Splitting..."
-            split -b 1500M -a 2 "$FILENAME" "${FILENAME}.part"
-            for part in "${FILENAME}".part*; do
-              echo "Uploading $part..."
-              if ! upload_with_retry "$part"; then
-                echo "::error::Failed to upload part $part after multiple attempts."
+                
+                echo "  ⚠️ Download failed or timed out. Retrying in 5s..."
+                sleep 5
+                attempt=$((attempt + 1))
+              done
+              return 1
+            }
+            
+            if [ "$IS_SPLIT" = "true" ]; then
+              for part in {a..z}{a..z}; do
+                PART_NAME="$BASE_FILENAME$EXT.part$part"
+                if echo "$ALL_ASSETS" | grep -q "^$PART_NAME$"; then
+                  if ! download_asset "$PART_NAME" "$BASE_URL/$PART_NAME"; then
+                    echo "::error::Failed to download $PART_NAME after multiple retries."
+                    exit 1
+                  fi
+                else break; fi
+              done
+            else
+              if ! download_asset "$BASE_FILENAME$EXT" "$BASE_URL/$BASE_FILENAME$EXT"; then
+                echo "::error::Failed to download $BASE_FILENAME$EXT after multiple retries."
                 exit 1
               fi
-              rm -f "$part"
-            done
-            rm -rf "$FILENAME"
-          else
-            echo "Uploading $FILENAME..."
-            if ! upload_with_retry "$FILENAME"; then
-              echo "::error::Failed to upload $FILENAME after multiple attempts."
-              exit 1
             fi
-            rm -f "$FILENAME"
+            echo "::endgroup::"
+            
+            echo "::group:: Extracting Cache"
+            mkdir -p "${{ inputs.cache_path }}"
+            FINAL_ARCHIVE="$BASE_FILENAME$EXT"
+            EXTRACT_DIR="$(dirname "${{ inputs.cache_path }}")"
+            
+            extract_cache() {
+              local cmd="$1"
+              if [ "${{ inputs.debug }}" = "true" ]; then
+                sh -c "$cmd"
+              else
+                sh -c "$cmd" > /dev/null 2>&1
+              fi
+            }
+            
+            if [ "$IS_SPLIT" = "true" ]; then
+              PARTS=$(ls "$FINAL_ARCHIVE.part"* | sort)
+              if [ "$COMPRESSED" = "true" ]; then
+                extract_cache "cat $PARTS | tar -I 'zstd -d -T0' -xvf - -C '$EXTRACT_DIR'"
+              else
+                extract_cache "cat $PARTS | tar -xvf - -C '$EXTRACT_DIR'"
+              fi
+              rm -f $PARTS
+            else
+              if [ "$COMPRESSED" = "true" ]; then
+                extract_cache "tar -I 'zstd -d -T0' -xvf '$FINAL_ARCHIVE' -C '$EXTRACT_DIR'"
+              else
+                extract_cache "tar -xvf '$FINAL_ARCHIVE' -C '$EXTRACT_DIR'"
+              fi
+              rm -f "$FINAL_ARCHIVE"
+            fi
+            echo "✅ Restore complete."
+            echo "::endgroup::"
+            break
+          done <<< "$SEARCH_LIST"
+          
+          if [ "$FOUND" = "false" ]; then
+              echo "⚠️ No cache matches found. Proceeding with fresh run."
           fi
-          echo "::endgroup::"
         fi
