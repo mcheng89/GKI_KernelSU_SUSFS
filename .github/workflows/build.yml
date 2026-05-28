@@ -84,31 +84,14 @@ jobs:
       shell: bash
       run: |
         set -x
-        
-        # Verify kernel/common exists and is a git repo
-        if [ ! -d "${{ github.workspace }}/kernel/common" ]; then
-          echo "ERROR: kernel/common directory does not exist!"
-          echo "Contents of kernel/:"
-          ls -la "${{ github.workspace }}/kernel/" || true
-          exit 1
-        fi
-        
-        if [ ! -d "${{ github.workspace }}/kernel/common/.git" ]; then
-          echo "ERROR: kernel/common is not a git repository!"
-          exit 1
-        fi
-        
-        # Try to get commit timestamp
-        SOURCE_DATE_EPOCH=$(git -C "${{ github.workspace }}/kernel/common" log -1 --format=%ct 2>&1)
-        if [ -z "$SOURCE_DATE_EPOCH" ] || [ "$SOURCE_DATE_EPOCH" = "0" ]; then
-          echo "WARNING: Failed to get commit timestamp from kernel/common, using current time"
-          SOURCE_DATE_EPOCH=$(date -u +%s)
-        fi
-        
+        # Hardcode the build timestamp to the 5th day of the patch level
+        # at 04:20 UTC, using the existing timestamp formats expected by the build.
+        FIXED_BUILD_DATE="${{ inputs.os_patch_level }}-05 04:20:00 UTC"
+        SOURCE_DATE_EPOCH=$(date -u -d "$FIXED_BUILD_DATE" +%s)
         echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH" >> $GITHUB_ENV
         KBUILD_TS=$(date -u -d @${SOURCE_DATE_EPOCH} '+%a %b %d %H:%M:%S UTC %Y')
         echo "KBUILD_BUILD_TIMESTAMP=${KBUILD_TS}" >> $GITHUB_ENV
-        # Set git author/committer date so any commits done by actions use this timestamp
+        # Keep git metadata aligned with the same fixed timestamp.
         GIT_DATE=$(date -u -d @${SOURCE_DATE_EPOCH} '+%Y-%m-%dT%H:%M:%SZ')
         echo "GIT_COMMITTER_DATE=${GIT_DATE}" >> $GITHUB_ENV
         echo "GIT_AUTHOR_DATE=${GIT_DATE}" >> $GITHUB_ENV
