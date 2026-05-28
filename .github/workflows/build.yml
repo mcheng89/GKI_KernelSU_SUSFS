@@ -86,7 +86,17 @@ jobs:
         set -x
         # Hardcode the build timestamp to the 5th day of the patch level
         # at 04:20 UTC, using the existing timestamp formats expected by the build.
-        FIXED_BUILD_DATE="${{ inputs.os_patch_level }}-05 04:20:00 UTC"
+        OS_PATCH_LEVEL_INPUT="${{ inputs.os_patch_level }}"
+        if [[ "$OS_PATCH_LEVEL_INPUT" == lts* ]]; then
+          if [[ "$OS_PATCH_LEVEL_INPUT" =~ ^lts-([0-9]{2})$ ]]; then
+            OS_PATCH_LEVEL_YM="$(date -u +%Y)-${BASH_REMATCH[1]}"
+          else
+            OS_PATCH_LEVEL_YM="$(date -u +%Y-%m)"
+          fi
+        else
+          OS_PATCH_LEVEL_YM="$OS_PATCH_LEVEL_INPUT"
+        fi
+        FIXED_BUILD_DATE="${OS_PATCH_LEVEL_YM}-05 04:20:00 UTC"
         SOURCE_DATE_EPOCH=$(date -u -d "$FIXED_BUILD_DATE" +%s)
         echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH" >> $GITHUB_ENV
         KBUILD_TS=$(date -u -d @${SOURCE_DATE_EPOCH} '+%a %b %d %H:%M:%S UTC %Y')
