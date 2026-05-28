@@ -119,7 +119,7 @@ runs:
           perl -i -pe 's/ignored_mask:%x/ignored_mask:0/g' fs/notify/fdinfo.c
         fi
         if [ "${{ inputs.sublevel }}" -ge "207" ]; then
-          echo "Applying task_mmu.c Android 14 6.1 Fake Patch"
+          echo "Applying task_mmu.c Android 13 5.15 Fake Patch"
           sed -i '/^#include <trace\/hooks\/blk.h>$/d' fs/proc/task_mmu.c
         fi
 
