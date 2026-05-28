@@ -120,7 +120,7 @@ runs:
         fi
         if [ "${{ inputs.sublevel }}" -ge "207" ]; then
           echo "Applying task_mmu.c Android 13 5.15 Fake Patch"
-          sed -i '/^#include <trace\/hooks\/blk.h>$/d' fs/proc/task_mmu.c
+          sed -i '/^#include <trace\/hooks\/mm.h>$/d' fs/proc/task_mmu.c
         fi
 
     - name: Apply Android 14 6.1 Fake Patches
@@ -230,7 +230,7 @@ runs:
         fi
         if [ "${{ inputs.sublevel }}" -ge "207" ]; then
           echo "Reverting task_mmu.c Android 13 5.15 Fake Patch"
-          sed -i '/^#include <linux\/pkeys.h>$/a #include <trace/hooks/blk.h>' fs/proc/task_mmu.c
+          sed -i '/^#include <linux\/pkeys.h>$/a #include <trace/hooks/mm.h>' fs/proc/task_mmu.c
         fi
 
     - name: Revert Android 14 6.1 Fake Patches
