@@ -82,9 +82,6 @@ runs:
               --lto=default \
               --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment \
               --disk_cache=/home/runner/.cache/bazel \
-              --experimental_disk_cache_gc_max_size=12G \
-              --experimental_disk_cache_gc_max_age=30d \
-              --experimental_disk_cache_gc_idle_delay=5m \
               //common:kernel_aarch64_dist \
               -- --destdir=/home/runner/out
           else
@@ -93,9 +90,6 @@ runs:
               --lto=default \
               --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment \
               --disk_cache=/home/runner/.cache/bazel \
-              --experimental_disk_cache_gc_max_size=12G \
-              --experimental_disk_cache_gc_max_age=30d \
-              --experimental_disk_cache_gc_idle_delay=5m \
               //common:kernel_aarch64_dist \
               -- --dist_dir=/home/runner/out
           fi
