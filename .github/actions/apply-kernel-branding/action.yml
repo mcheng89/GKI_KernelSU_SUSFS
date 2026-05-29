@@ -39,6 +39,6 @@ runs:
           KERNEL_STRING="$KERNEL_PART.${{ inputs.sublevel }}-$ANDROID_PART"
           echo "echo \"$KERNEL_STRING-Wild\"" >> scripts/setlocalversion
         else
-          echo 'echo "-Wild"' >> scripts/setlocalversion
+          echo "echo \"-$ANDROID_PART-Wild\"" >> scripts/setlocalversion
         fi
         chmod +x scripts/setlocalversion
