@@ -238,7 +238,6 @@ jobs:
         cache_path: /home/runner/.ccache
         cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}
         cache_bucket: ccache-cache
-        compression_level: 9
         restore_keys: |
           ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-
 
@@ -250,7 +249,6 @@ jobs:
         cache_path: /home/runner/.ld_cache
         cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}
         cache_bucket: lto-cache
-        compression_level: 9
         restore_keys: |
           ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-
 
@@ -262,7 +260,6 @@ jobs:
         cache_path: /home/runner/.cache/bazel
         cache_key: ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-${{ inputs.os_patch_level }}
         cache_bucket: bazel-cache
-        compression_level: 9
         restore_keys: |
           ${{ inputs.android_version }}-${{ inputs.kernel_version }}.${{ steps.extract.outputs.sublevel }}-
 
