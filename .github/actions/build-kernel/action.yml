@@ -84,7 +84,7 @@ runs:
               --disk_cache=/home/runner/.cache/bazel \
               //common:kernel_aarch64_dist \
               -- --destdir=/home/runner/out
-          elif [[ ${{ inputs.version }} == "android16-6.6" ]]; then
+          else
             tools/bazel run \
               --config=fast \
               --config=stamp \
