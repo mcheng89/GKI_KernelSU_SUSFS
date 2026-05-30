@@ -1,50 +1,47 @@
 diff --git a/anykernel.sh b/anykernel.sh
-index 35b6e59..7936667 100755
+index 35b6e59..b6adbbe 100755
 --- a/anykernel.sh
 +++ b/anykernel.sh
-@@ -45,6 +45,47 @@ esac
+@@ -45,6 +45,44 @@ esac
  ui_print " " "  -> Wild Kernels Supported: $ksu_supported"
  $ksu_supported || abort "  -> Non-GKI device, abort."
  
-+handle_input() {
-+    /system/bin/getevent -lq 2>/dev/null | while IFS= read -r line; do
-+        case "$line" in
-+            *KEY_VOLUMEUP*DOWN*) echo "bypass"; break ;;
-+            *KEY_VOLUMEDOWN*DOWN*) echo "normal"; break ;;
-+            *KEY_POWER*DOWN*) echo "cancel"; break ;;
-+        esac
-+    done
-+}
-+
 +choose_flash_mode() {
-+    ui_print "  -> Most users do not need Bypass; try Normal first!"
-+    ui_print "  -> This only swaps the Image for compatibility workarounds, this doesn't help with hiding root."
-+    ui_print "  -> VOL+ = Bypass"
-+    ui_print "  -> VOL- = Normal"
-+    ui_print "  -> POWER = Cancel"
++    ui_print "Press Volume Up = Bypass, Volume Down = Normal, Power = Cancel"
++    raw_events="/tmp/ak3_raw_events"
++    events="/tmp/ak3_events"
++    : > "$raw_events"
++    : > "$events"
++    getevent -lc 1 2>&1 > "$raw_events" &
++    pid=$!
++    sleep 1
++    kill -0 $pid 2>/dev/null && kill $pid 2>/dev/null
++    grep VOLUME "$raw_events" | grep " DOWN" > "$events" 2>/dev/null || true
 +
-+    while true; do
-+        case $(handle_input) in
-+            normal)
-+                ui_print "  -> Selected: Normal"
-+                return 0
-+                ;;
-+            bypass)
-+                ui_print "  -> Selected: Bypass"
-+                if [ -f "$AKHOME/Bypass-Image" ]; then
-+                    cp -f "$AKHOME/Bypass-Image" "$AKHOME/Image"
-+                    ui_print "  -> Using Bypass-Image for this flash"
-+                    return 0
-+                fi
-+               abort "  -> ERROR: Bypass-Image not found. Abort."
-+                ;;
-+            cancel)
-+                abort "  -> Cancelled by POWER button. Abort."
-+                ;;
-+        esac
-+    done
++    if grep -q "VOLUMEUP" "$events" 2>/dev/null; then
++        ui_print "  -> Selected: Bypass"
++        if [ -f "$AKHOME/Bypass-Image" ]; then
++            cp -f "$AKHOME/Bypass-Image" "$AKHOME/Image" || abort "  -> ERROR: Failed to copy Bypass-Image. Abort."
++            ui_print "  -> Using Bypass"
++            return 0
++        else
++            abort "  -> ERROR: Bypass-Image not found. Abort."
++        fi
++    elif grep -q "VOLUMEDOWN" "$events" 2>/dev/null; then
++        ui_print "  -> Selected: Normal"
++        if [ -f "$AKHOME/Image" ]; then
++            return 0
++        else
++            abort "  -> ERROR: Image not found. Abort."
++        fi
++    elif grep -q "POWER" "$raw_events" 2>/dev/null; then
++        abort "  -> Cancelled by Power button. Abort."
++    else
++        abort "  -> No input detected. Abort."
++    fi
 +}
 +
++# Ask user which mode to use
 +choose_flash_mode
 +
  # boot install
