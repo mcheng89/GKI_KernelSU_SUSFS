@@ -30,7 +30,7 @@ index 719de4c..3f71202 100755
 +    : > "$events"
 +    getevent -lc 1 2>&1 > "$raw_events" &
 +    pid=$!
-+    sleep 1
++    sleep 20
 +    kill -0 $pid 2>/dev/null && kill $pid 2>/dev/null
 +    grep VOLUME "$raw_events" | grep " DOWN" > "$events" 2>/dev/null || true
 +
