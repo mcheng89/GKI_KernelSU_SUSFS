@@ -166,7 +166,7 @@ runs:
           for ($i = $#l; $i >= 0; $i--) {
               if ($l[$i] =~ /last_vma_end = vma->vm_end;/) {
                   $l[$i] = "\t\t\t\t" . $l[$i];
-                  splice(@l, $i + 1, 0, "\t\t\t}\n");
+                  splice(@l, $i + 1, 0, "\t\t\t}");
                   last;
               }
           }
