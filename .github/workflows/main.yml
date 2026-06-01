@@ -161,6 +161,20 @@ jobs:
 
             dirname=$(basename "$dir")
             original_name=${dirname%-Rejects}
+            source_dir="$dir"
+
+            if [ -d "$dir/patch-rejects" ]; then
+              source_dir="$dir/patch-rejects"
+            fi
+
+            mapfile -t rej_files < <(find "$source_dir" -type f -name '*.rej' | sort)
+            if [ "${#rej_files[@]}" -eq 1 ]; then
+              rel_rej="${rej_files[0]#${source_dir}/}"
+              if [ "$rel_rej" = "common/mm/rmap.c.rej" ]; then
+                echo "Skipping $dirname because it only contains common/mm/rmap.c.rej"
+                continue
+              fi
+            fi
 
             mkdir -p "aio-rejects/$original_name"
 

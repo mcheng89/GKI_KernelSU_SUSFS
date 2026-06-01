@@ -157,6 +157,7 @@ runs:
         if [ "${{ inputs.sublevel }}" -le "30" ]; then
           echo "Applying taskmmu.c Android 15 6.6 Fake Patch"
           sed -i '/smap_gather_stats(vma, &mss, last_vma_end);/a\last_vma_end = vma->vm_end;' fs/proc/task_mmu.c
+          sed -i '0,/last_vma_end = vma->vm_end;/{s/last_vma_end = vma->vm_end;/\t\t\t\t&/}' fs/proc/task_mmu.c
         fi
         if [ "${{ inputs.sublevel }}" -le "92" ]; then
           echo "Applying base.c Android 15 6.6 Fake Patch"
@@ -177,9 +178,9 @@ runs:
           echo "Applying exec.c Android 16 6.12 Fake Patch"
           sed -i '/^#include <linux\/dma-buf.h>$/d' fs/exec.c
         fi
-        if [ "${{ inputs.sublevel }}" -ge "69" ]; then
+        if [ "${{ inputs.sublevel }}" -ge "9999" ]; then
           echo "Applying task_mmu.c Android 16 6.12 Fake Patch"
-          sed -i 's/vma_pages/vma_data_pages/g' fs/proc/task_mmu.c
+          sed -i 's/vma_data_pages/vma_pages/g' fs/proc/task_mmu.c
         fi
 
     - name: Apply Kernel SUSFS Patches
