@@ -178,7 +178,7 @@ runs:
           echo "Applying exec.c Android 16 6.12 Fake Patch"
           sed -i '/^#include <linux\/dma-buf.h>$/d' fs/exec.c
         fi
-        if [ "${{ inputs.sublevel }}" -ge "9999" ]; then
+        if [ "${{ inputs.sublevel }}" -ge "69" ]; then
           echo "Applying task_mmu.c Android 16 6.12 Fake Patch"
           sed -i 's/vma_data_pages/vma_pages/g' fs/proc/task_mmu.c
         fi
