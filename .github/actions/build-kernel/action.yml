@@ -98,8 +98,9 @@ runs:
 
         tools/bazel shutdown || true
         while [ "$(du -sb "$CACHE" | cut -f1 || echo 0)" -gt "$MAX_BYTES" ]; do
-          OLDEST=$(find "$CACHE" -type f -printf '%T@ %p\n' | sort -n | head -n1 | cut -d' ' -f2-)
-          [ -z "$OLDEST" ] && break
+          mapfile -t OLDEST_FILES < <(find "$CACHE" -type f -printf '%T@ %p\n' | sort -n)
+          [ "${#OLDEST_FILES[@]}" -eq 0 ] && break
+          OLDEST="${OLDEST_FILES[0]#* }"
           rm -f "$OLDEST"
         done
       fi
