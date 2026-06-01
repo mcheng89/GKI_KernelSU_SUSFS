@@ -84,25 +84,15 @@ runs:
               --disk_cache=/home/runner/.cache/bazel \
               //common:kernel_aarch64_dist \
               -- --destdir=/home/runner/out
-          else
-            tools/bazel run \
-              --config=fast \
-              --config=stamp \
-              --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment \
-              --disk_cache=/home/runner/.cache/bazel \
-              //common:kernel_aarch64_dist \
-              -- --dist_dir=/home/runner/out
-          fi
-        CACHE=/home/runner/.cache/bazel
-        MAX_BYTES=$((16*1024*1024*1024))
-
-        tools/bazel shutdown || true
-        while [ "$(du -sb "$CACHE" | cut -f1 || echo 0)" -gt "$MAX_BYTES" ]; do
-          mapfile -t OLDEST_FILES < <(find "$CACHE" -type f -printf '%T@ %p\n' | sort -n)
-          [ "${#OLDEST_FILES[@]}" -eq 0 ] && break
-          OLDEST="${OLDEST_FILES[0]#* }"
-          rm -f "$OLDEST"
-        done
+        else
+          tools/bazel run \
+            --config=fast \
+            --config=stamp \
+            --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment \
+            --disk_cache=/home/runner/.cache/bazel \
+            //common:kernel_aarch64_dist \
+            -- --dist_dir=/home/runner/out
+        fi
       fi
 
       echo "Contents of /home/runner/out"
