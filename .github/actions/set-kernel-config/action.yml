@@ -7,13 +7,14 @@ inputs:
     required: true
   config_file:
     required: true
-    default: ${{ github.workspace }}/kernel/common/arch/arm64/configs/gki_defconfig
+    default: common/arch/arm64/configs/gki_defconfig
 
 runs:
   using: composite
   steps:
     - name: Apply configs
       shell: bash
+      working-directory: ${{ github.workspace }}/kernel
       run: |
         set -euo pipefail
 
@@ -46,14 +47,14 @@ runs:
 
           case "$value" in
             y|Y|yes|YES|1|true|TRUE)
-              ./scripts/config --file "$CONFIG_FILE" -e "$config"
+              common/scripts/config --file "$CONFIG_FILE" -e "$config"
               ;;
             n|N|no|NO|0|false|FALSE)
-              ./scripts/config --file "$CONFIG_FILE" -d "$config"
+              common/scripts/config --file "$CONFIG_FILE" -d "$config"
               ;;
             *)
               # assume explicit value (string/int)
-              ./scripts/config --file "$CONFIG_FILE" --set-val "$config" "$value"
+              common/scripts/config --file "$CONFIG_FILE" --set-val "$config" "$value"
               ;;
           esac
         }

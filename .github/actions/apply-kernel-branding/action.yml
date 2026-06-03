@@ -24,11 +24,6 @@ runs:
       shell: bash
       working-directory: ${{ github.workspace }}/kernel/common
       run: |
-        CONFIG_FRAGMENT="${{ github.workspace }}/wild_gki.fragment"
-        touch "$CONFIG_FRAGMENT"
-
-        DEFCONFIG="${{ github.workspace }}/kernel/common/arch/arm64/configs/gki_defconfig"
-
         VERSION="${{ inputs.version }}"
         ANDROID_PART=$(echo "$VERSION" | cut -d- -f1)
         KERNEL_PART=$(echo "$VERSION" | cut -d- -f2)
