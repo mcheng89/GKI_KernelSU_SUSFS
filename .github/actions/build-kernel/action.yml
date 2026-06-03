@@ -54,9 +54,6 @@ runs:
       mkdir -p /home/runner/out
 
       if [ -f "build/build.sh" ]; then
-        make -C common O=/home/runner/out gki_defconfig
-        make -C common O=/home/runner/out savedefconfig
-        cp /home/runner/out/defconfig common/arch/arm64/configs/gki_defconfig
         BUILD_GKI_ARTIFACTS= \
         BUILD_GKI_CERTIFICATION_TOOLS=0 \
         BUILD_SYSTEM_DLKM=0 \
@@ -73,6 +70,7 @@ runs:
         HOSTCXX="/usr/bin/ccache clang+" \
         LD="${{ github.workspace }}/kernel/common/ld-wrapper" \
         HOSTLD="${{ github.workspace }}/kernel/common/ld-wrapper"
+        ls /home/runner/out
       else
         tools/bazel info output_base
         cp "${{ github.workspace }}/wild_gki.fragment" common/arch/arm64/configs/wild_gki.fragment
