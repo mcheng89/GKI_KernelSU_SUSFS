@@ -21,8 +21,8 @@ runs:
         CONFIG_FILE="${{ inputs.config_file }}"
 
         # ensure config tool exists
-        if [ ! -f scripts/config ]; then
-          echo "ERROR: scripts/config not found"
+        if [ ! -f common/scripts/config ]; then
+          echo "ERROR: common/scripts/config not found"
           exit 1
         fi
 
