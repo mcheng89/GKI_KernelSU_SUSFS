@@ -58,7 +58,7 @@ runs:
 
     - name: Export IPC symbols for module linkage
       shell: bash
-      if: 
+      if: inputs.version == 'android16-6.12'
       working-directory: ${{ github.workspace }}/kernel
       run: |
         echo >> "${{ github.workspace }}/kernel/common/ipc/namespace.c"
@@ -68,16 +68,31 @@ runs:
 
     - name: Enable Configs
       shell: bash
-      working-directory: ${{ github.workspace }}/kernel
+      working-directory: ${{ github.workspace }}/kernel/common
       run: |
+        sed -i 's/# CONFIG_PID_NS is not set/CONFIG_PID_NS=y/' arch/arm64/configs/gki_defconfig
         cat >> "${{ github.workspace }}/wild_gki.fragment" << 'EOF'
         CONFIG_SYSVIPC=y
         CONFIG_POSIX_MQUEUE=y
         CONFIG_IPC_NS=y
-        CONFIG_PID_NS=y
         CONFIG_DEVTMPFS=y
         CONFIG_BINFMT_MISC=y
         CONFIG_BINFMT_SCRIPT=y
         CONFIG_BINFMT_ELF=y
         EOF
+
+    - name: Enable Kernel Configs
+      uses: ./.github/actions/set-kernel-config
+      with:
+        defconfig: ${{ github.workspace }}/kernel/common/arch/arm64/configs/gki_defconfig
+        fragment: ${{ github.workspace }}/wild_gki.fragment
+        configs: |
+          CONFIG_PID_NS
+          CONFIG_SYSVIPC
+          CONFIG_POSIX_MQUEUE
+          CONFIG_IPC_NS
+          CONFIG_DEVTMPFS
+          CONFIG_BINFMT_MISC
+          CONFIG_BINFMT_SCRIPT
+          CONFIG_BINFMT_ELF
 
