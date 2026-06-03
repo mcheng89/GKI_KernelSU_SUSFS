@@ -84,7 +84,7 @@ runs:
     - name: Enable Kernel Configs
       uses: ./.github/actions/set-kernel-config
       with:
-        fragment: ${{ github.workspace }}/wild_gki.fragment
+        config_file: ${{ github.workspace }}/kernel/common/arch/arm64/configs/gki_defconfig
         configs: |
           CONFIG_PID_NS
           CONFIG_SYSVIPC

@@ -1,12 +1,13 @@
 # .github/actions/set-kernel-config/action.yml
 name: Set Kernel Config
-description: Writes kernel config values into a fragment (NO defconfig edits)
+description: Applies kernel config values directly using scripts/config (NO fragments)
 
 inputs:
   configs:
     required: true
-  fragment:
+  config_file:
     required: true
+    default: ${{ github.workspace }}/kernel/common/arch/arm64/configs/gki_defconfig
 
 runs:
   using: composite
@@ -16,15 +17,21 @@ runs:
       run: |
         set -euo pipefail
 
-        FRAGMENT="${{ inputs.fragment }}"
-        touch "${FRAGMENT}"
+        CONFIG_FILE="${{ inputs.config_file }}"
 
-        set_config() {
+        # ensure config tool exists
+        if [ ! -f scripts/config ]; then
+          echo "ERROR: scripts/config not found"
+          exit 1
+        fi
+
+        apply_config() {
           local input="$1"
 
           # trim whitespace
           input="$(echo "$input" | xargs)"
 
+          # skip empty or comments
           [[ -z "$input" || "$input" == \#* ]] && return
 
           if [[ "$input" == *"="* ]]; then
@@ -35,13 +42,22 @@ runs:
             local value="y"
           fi
 
-          # remove any existing entry (prevents duplicates/conflicts)
-          sed -i "/^${config}=/d" "${FRAGMENT}"
+          echo "Setting: $config=$value"
 
-          # write clean value
-          echo "${config}=${value}" >> "${FRAGMENT}"
+          case "$value" in
+            y|Y|yes|YES|1|true|TRUE)
+              ./scripts/config --file "$CONFIG_FILE" -e "$config"
+              ;;
+            n|N|no|NO|0|false|FALSE)
+              ./scripts/config --file "$CONFIG_FILE" -d "$config"
+              ;;
+            *)
+              # assume explicit value (string/int)
+              ./scripts/config --file "$CONFIG_FILE" --set-val "$config" "$value"
+              ;;
+          esac
         }
 
         while IFS= read -r line; do
-          set_config "$line"
+          apply_config "$line"
         done <<< "${{ inputs.configs }}"
