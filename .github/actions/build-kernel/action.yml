@@ -70,7 +70,9 @@ runs:
         HOSTCXX="/usr/bin/ccache clang+" \
         LD="${{ github.workspace }}/kernel/common/ld-wrapper" \
         HOSTLD="${{ github.workspace }}/kernel/common/ld-wrapper" || true
-        ls /home/runner/out
+        ls /home/runner/out/commmon
+        ls /home/runner/out/dist
+        exit
       else
         tools/bazel info output_base
         cp "${{ github.workspace }}/wild_gki.fragment" common/arch/arm64/configs/wild_gki.fragment
