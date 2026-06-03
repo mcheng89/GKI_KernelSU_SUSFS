@@ -70,8 +70,12 @@ runs:
         HOSTCXX="/usr/bin/ccache clang+" \
         LD="${{ github.workspace }}/kernel/common/ld-wrapper" \
         HOSTLD="${{ github.workspace }}/kernel/common/ld-wrapper" || true
+        echo "Contents of /home/runner/out after build.sh"
         ls /home/runner/out/common
+        cat /home/runner/out/common/defconfig
+        echo "Contents of /home/runner/out/dist after build.sh"
         ls /home/runner/out/dist
+        cat /home/runner/out/dist/defconfig
         exit
       else
         tools/bazel info output_base
