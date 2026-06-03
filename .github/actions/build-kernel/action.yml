@@ -70,7 +70,7 @@ runs:
         HOSTCXX="/usr/bin/ccache clang+" \
         LD="${{ github.workspace }}/kernel/common/ld-wrapper" \
         HOSTLD="${{ github.workspace }}/kernel/common/ld-wrapper" || true
-        ls /home/runner/out/commmon
+        ls /home/runner/out/common
         ls /home/runner/out/dist
         exit
       else
