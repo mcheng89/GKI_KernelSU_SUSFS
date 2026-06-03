@@ -48,20 +48,21 @@ runs:
       SKIP_MRPROPER=1
       EOF
 
-      #cat "${{ github.workspace }}/wild_gki.fragment" > common/arch/arm64/configs/gki_defconfig
+      cat "${{ github.workspace }}/wild_gki.fragment" > common/arch/arm64/configs/gki_defconfig
       cp "${{ github.workspace }}/gki_build_overrides.fragment" "${{ github.workspace }}/kernel/common/gki_build_overrides.fragment"
 
       mkdir -p /home/runner/out
 
       if [ -f "build/build.sh" ]; then
-        common/scripts/config --file common/arch/arm64/configs/gki_defconfig --enable PID_NS
+        make O=/home/runner/out/common gki_defconfig
+        make O=/home/runner/out/common savedefconfig
+        cp /home/runner/out/common/defconfig common/arch/arm64/configs/gki_defconfig
         BUILD_GKI_ARTIFACTS= \
         BUILD_GKI_CERTIFICATION_TOOLS=0 \
         BUILD_SYSTEM_DLKM=0 \
         SKIP_VENDOR_BOOT=1 \
         SKIP_EXT_MODULES=1 \
         SKIP_CP_KERNEL_HDR=1 \
-        SKIP_MRPROPER=1 \
         OUT_DIR="/home/runner/out" \
         LTO=thin \
         BUILD_CONFIG=common/build.config.gki.aarch64 \
