@@ -48,8 +48,8 @@ runs:
       SKIP_MRPROPER=1
       EOF
 
-      cp "${{ github.workflow }}/wild_gki.fragment" "${{ github.workflow }}/kernel/common/wild_gki.fragment"
-      cp "${{ github.workflow }}/gki_build_overrides.fragment" "${{ github.workflow }}/kernel/common/gki_build_overrides.fragment"
+      cp "${{ github.workspace }}/wild_gki.fragment" "${{ github.workspace }}/kernel/common/wild_gki.fragment"
+      cp "${{ github.workspace }}/gki_build_overrides.fragment" "${{ github.workspace }}/kernel/common/gki_build_overrides.fragment"
 
       mkdir -p /home/runner/out
 
