@@ -42,7 +42,7 @@ runs:
       cat arch/arm64/configs/gki_defconfig
       rm -rf /home/runner/out
       mkdir -p /home/runner/out
-
+      cd ${{ github.workspace }}/kernel
       if [ -f "build/build.sh" ]; then
         BUILD_GKI_ARTIFACTS= \
         BUILD_GKI_CERTIFICATION_TOOLS=0 \
@@ -59,10 +59,7 @@ runs:
         HOSTCC="/usr/bin/ccache clang" \
         HOSTCXX="/usr/bin/ccache clang+" \
         LD="${{ github.workspace }}/kernel/common/ld-wrapper" \
-        HOSTLD="${{ github.workspace }}/kernel/common/ld-wrapper" || true
-        echo "Contents of /home/runner/out after build.sh"
-        ls /home/runner/out/common
-        cat /home/runner/out/common/defconfig
+        HOSTLD="${{ github.workspace }}/kernel/common/ld-wrapper"
       else
         tools/bazel info output_base
         cp "${{ github.workspace }}/wild_gki.fragment" common/arch/arm64/configs/wild_gki.fragment
