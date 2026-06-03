@@ -48,17 +48,22 @@ runs:
       SKIP_MRPROPER=1
       EOF
 
-      cp "${{ github.workspace }}/wild_gki.fragment" "${{ github.workspace }}/kernel/common/wild_gki.fragment"
+      #cat "${{ github.workspace }}/wild_gki.fragment" > common/arch/arm64/configs/gki_defconfig
       cp "${{ github.workspace }}/gki_build_overrides.fragment" "${{ github.workspace }}/kernel/common/gki_build_overrides.fragment"
 
       mkdir -p /home/runner/out
 
       if [ -f "build/build.sh" ]; then
+        scripts/config --file common/arch/arm64/configs/gki_defconfig --enable PID_NS
+        BUILD_GKI_ARTIFACTS= \
+        BUILD_GKI_CERTIFICATION_TOOLS=0 \
+        BUILD_SYSTEM_DLKM=0 \
+        SKIP_VENDOR_BOOT=1 \
+        SKIP_EXT_MODULES=1 \
+        SKIP_CP_KERNEL_HDR=1 \
         SKIP_MRPROPER=1 \
         OUT_DIR="/home/runner/out" \
         LTO=thin \
-        GKI_DEFCONFIG_FRAGMENT=common/wild_gki.fragment \
-        GKI_BUILD_CONFIG_FRAGMENT=common/gki_build_overrides.fragment \
         BUILD_CONFIG=common/build.config.gki.aarch64 \
         build/build.sh -j"$(nproc)" \
         CC="/usr/bin/ccache clang" \
