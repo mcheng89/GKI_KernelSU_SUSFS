@@ -54,7 +54,7 @@ runs:
       mkdir -p /home/runner/out
 
       if [ -f "build/build.sh" ]; then
-        scripts/config --file common/arch/arm64/configs/gki_defconfig --enable PID_NS
+        common/scripts/config --file common/arch/arm64/configs/gki_defconfig --enable PID_NS
         BUILD_GKI_ARTIFACTS= \
         BUILD_GKI_CERTIFICATION_TOOLS=0 \
         BUILD_SYSTEM_DLKM=0 \
