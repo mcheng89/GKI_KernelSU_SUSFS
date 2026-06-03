@@ -5,9 +5,6 @@ description: Applies kernel config values directly using scripts/config (NO frag
 inputs:
   configs:
     required: true
-  config_file:
-    required: true
-    default: common/arch/arm64/configs/gki_defconfig
 
 runs:
   using: composite
@@ -18,7 +15,7 @@ runs:
       run: |
         set -euo pipefail
 
-        CONFIG_FILE="${{ inputs.config_file }}"
+        CONFIG_FILE="/home/runner/out/.config "
 
         # ensure config tool exists
         if [ ! -f common/scripts/config ]; then

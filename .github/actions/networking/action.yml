@@ -22,7 +22,6 @@ runs:
     - name: Add IP SET & IPv6_NAT Support
       uses: ./.github/actions/set-kernel-config
       with:
-        config_file: common/arch/arm64/configs/gki_defconfig
         configs: |
           CONFIG_IP_SET
           CONFIG_IP_SET_MAX=65534
@@ -52,7 +51,6 @@ runs:
     - name: Apply TCP Congestion Control
       uses: ./.github/actions/set-kernel-config
       with:
-        config_file: common/arch/arm64/configs/gki_defconfig
         configs: |
           CONFIG_TCP_CONG_ADVANCED
           CONFIG_TCP_CONG_BBR

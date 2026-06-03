@@ -69,7 +69,6 @@ runs:
     - name: Enable Kernel Configs
       uses: ./.github/actions/set-kernel-config
       with:
-        config_file: common/arch/arm64/configs/gki_defconfig
         configs: |
           CONFIG_PID_NS
           CONFIG_SYSVIPC
