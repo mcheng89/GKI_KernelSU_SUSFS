@@ -56,8 +56,8 @@ runs:
       if [ -f "build/build.sh" ]; then
         OUT_DIR="/home/runner/out" \
         LTO=thin \
-        GKI_DEFCONFIG_FRAGMENT=wild_gki.fragment \
-        GKI_BUILD_CONFIG_FRAGMENT=gki_build_overrides.fragment \
+        GKI_DEFCONFIG_FRAGMENT=common/wild_gki.fragment \
+        GKI_BUILD_CONFIG_FRAGMENT=common/gki_build_overrides.fragment \
         BUILD_CONFIG=common/build.config.gki.aarch64 \
         build/build.sh -j"$(nproc)" \
         CC="/usr/bin/ccache clang" \
