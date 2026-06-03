@@ -54,6 +54,7 @@ runs:
       mkdir -p /home/runner/out
 
       if [ -f "build/build.sh" ]; then
+        SKIP_MRPROPER=1 \
         OUT_DIR="/home/runner/out" \
         LTO=thin \
         GKI_DEFCONFIG_FRAGMENT=common/wild_gki.fragment \
