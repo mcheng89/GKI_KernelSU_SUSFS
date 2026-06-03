@@ -56,7 +56,7 @@ runs:
       if [ -f "build/build.sh" ]; then
         make -C common O=/home/runner/out gki_defconfig
         make -C common O=/home/runner/out savedefconfig
-        cp /home/runner/out/common/defconfig common/arch/arm64/configs/gki_defconfig
+        cp /home/runner/out/defconfig common/arch/arm64/configs/gki_defconfig
         BUILD_GKI_ARTIFACTS= \
         BUILD_GKI_CERTIFICATION_TOOLS=0 \
         BUILD_SYSTEM_DLKM=0 \
