@@ -1,22 +1,11 @@
 # .github/actions/set-kernel-config/action.yml
 name: Set Kernel Config
-description: Enables kernel configs — handles =y, =n, "not set", missing, and arbitrary values
+description: Writes kernel config values into a fragment (NO defconfig edits)
 
 inputs:
   configs:
-    description: |
-      Newline-separated list of configs to set.
-      Plain name defaults to =y. Supply a value for anything else.
-      Examples:
-        CONFIG_PID_NS
-        CONFIG_IP_SET_MAX=65534
-        CONFIG_LOG_BUF_SHIFT=17
-    required: true
-  defconfig:
-    description: Path to the defconfig file
     required: true
   fragment:
-    description: Path to the .config fragment file (missing configs land here)
     required: true
 
 runs:
@@ -25,15 +14,19 @@ runs:
     - name: Apply configs
       shell: bash
       run: |
-        DEFCONFIG="${{ inputs.defconfig }}"
-        FRAGMENT="${{ inputs.fragment }}"
+        set -euo pipefail
 
+        FRAGMENT="${{ inputs.fragment }}"
         touch "${FRAGMENT}"
 
         set_config() {
           local input="$1"
 
-          # Split name=value — default to =y if no value supplied
+          # trim whitespace
+          input="$(echo "$input" | xargs)"
+
+          [[ -z "$input" || "$input" == \#* ]] && return
+
           if [[ "$input" == *"="* ]]; then
             local config="${input%%=*}"
             local value="${input#*=}"
@@ -42,31 +35,13 @@ runs:
             local value="y"
           fi
 
-          if grep -q "^${config}=${value}$" "${DEFCONFIG}"; then
-            echo "[SKIP]  ${config} already =${value} in defconfig"
+          # remove any existing entry (prevents duplicates/conflicts)
+          sed -i "/^${config}=/d" "${FRAGMENT}"
 
-          elif grep -q "^${config}=" "${DEFCONFIG}"; then
-            # Present but wrong value — replace it
-            sed -i "s/^${config}=.*/${config}=${value}/" "${DEFCONFIG}"
-            echo "[FIX]   ${config} had wrong value → updated to =${value} in defconfig"
-
-          elif grep -q "# ${config} is not set" "${DEFCONFIG}"; then
-            sed -i "s/# ${config} is not set/${config}=${value}/" "${DEFCONFIG}"
-            echo "[FIX]   ${config} was 'not set' → set to =${value} in defconfig"
-
-          else
-            if ! grep -q "^${config}=${value}$" "${FRAGMENT}"; then
-              echo "${config}=${value}" >> "${FRAGMENT}"
-              echo "[FRAG]  ${config} not found → added =${value} to fragment"
-            else
-              echo "[SKIP]  ${config} already =${value} in fragment"
-            fi
-          fi
+          # write clean value
+          echo "${config}=${value}" >> "${FRAGMENT}"
         }
 
         while IFS= read -r line; do
-          # Strip whitespace, skip blanks and comments
-          line="$(echo "$line" | tr -d '[:space:]')"
-          [[ -z "$line" || "$line" == \#* ]] && continue
           set_config "$line"
         done <<< "${{ inputs.configs }}"

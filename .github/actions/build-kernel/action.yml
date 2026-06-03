@@ -36,16 +36,7 @@ runs:
   
       rm -rf "out"
 
-      GKI_KCONFIG_FRAGMENT_PATH="${{ github.workspace }}/wild_gki.fragment"
-      GKI_DEFCONFIG_WRAPPER_PATH="${{ github.workspace }}/wild_gki.wrap.sh"
-
-      cat > "${GKI_DEFCONFIG_WRAPPER_PATH}" <<EOF
-      append_cmd POST_DEFCONFIG_CMDS 'if [ -f "${GKI_KCONFIG_FRAGMENT_PATH}" ]; then \${KERNEL_DIR}/scripts/kconfig/merge_config.sh -m -O \${OUT_DIR} \${OUT_DIR}/.config "${GKI_KCONFIG_FRAGMENT_PATH}"; fi && (cd \${KERNEL_DIR} && make O=\${OUT_DIR} olddefconfig)'
-      EOF
-
-      # Override expensive GKI build.sh artifact defaults we do not need in CI.
-      GKI_BUILD_CONFIG_FRAGMENT_PATH="${{ github.workspace }}/gki_build_overrides.fragment"
-      cat > "${GKI_BUILD_CONFIG_FRAGMENT_PATH}" <<'EOF'
+      cat > ${{ github.workspace }}/gki_build_overrides.fragment <<'EOF'
       BUILD_GKI_ARTIFACTS=
       BUILD_GKI_CERTIFICATION_TOOLS=0
       BUILD_SYSTEM_DLKM=0
@@ -57,14 +48,16 @@ runs:
       SKIP_MRPROPER=1
       EOF
 
+      cp "${{ github.workflow }}/wild_gki.fragment" "${{ github.workflow }}/kernel/common/wild_gki.fragment"
+      cp "${{ github.workflow }}/gki_build_overrides.fragment" "${{ github.workflow }}/kernel/common/gki_build_overrides.fragment"
+
       mkdir -p /home/runner/out
 
       if [ -f "build/build.sh" ]; then
-        #SKIP_MRPROPER=1 
         OUT_DIR="/home/runner/out" \
         LTO=thin \
-        GKI_DEFCONFIG_FRAGMENT="${GKI_DEFCONFIG_WRAPPER_PATH}" \
-        GKI_BUILD_CONFIG_FRAGMENT="${GKI_BUILD_CONFIG_FRAGMENT_PATH}" \
+        GKI_DEFCONFIG_FRAGMENT=wild_gki.fragment \
+        GKI_BUILD_CONFIG_FRAGMENT=gki_build_overrides.fragment \
         BUILD_CONFIG=common/build.config.gki.aarch64 \
         build/build.sh -j"$(nproc)" \
         CC="/usr/bin/ccache clang" \
