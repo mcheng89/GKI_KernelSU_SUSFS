@@ -45,8 +45,8 @@ runs:
       # (savedefconfig strips trailing newlines, causing check_defconfig to fail on 5.10.233+)
       #perl -pi -e 's/\n*\z/\n/' common/arch/arm64/configs/gki_defconfig
 
-      cp "${{ github.workspace }}/wild_gki.fragment" common/arch/arm64/configs/wild_gki.fragment
-
+      #cp "${{ github.workspace }}/wild_gki.fragment" common/arch/arm64/configs/wild_gki.fragment
+      sed -i 's/check_defconfig//' ./common/build.config.gki
       if [ -f "build/build.sh" ]; then
         BUILD_GKI_ARTIFACTS= \
         BUILD_GKI_CERTIFICATION_TOOLS=0 \
@@ -66,7 +66,7 @@ runs:
         HOSTLD="${{ github.workspace }}/kernel/common/ld-wrapper"
       else
         tools/bazel info output_base
-        cp "${{ github.workspace }}/wild_gki.fragment" common/arch/arm64/configs/wild_gki.fragment
+        #cp "${{ github.workspace }}/wild_gki.fragment" common/arch/arm64/configs/wild_gki.fragment
         if [[ ${{ inputs.version }} == "android16-6.12" ]]; then
           tools/bazel run \
             --config=fast \
