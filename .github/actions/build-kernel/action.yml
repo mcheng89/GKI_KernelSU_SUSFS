@@ -96,6 +96,8 @@ runs:
           cp "/home/runner/out/dist/Image" "${{ github.workspace }}/AnyKernel3/Bypass-Image"
         else
           cp "/home/runner/out/dist/Image" "${{ github.workspace }}/AnyKernel3/Image"
+          echo "Kernel Version:"
+          strings "/home/runner/out/dist/Image" | grep -m1 "^Linux version "
         fi
           exit 0
         fi
