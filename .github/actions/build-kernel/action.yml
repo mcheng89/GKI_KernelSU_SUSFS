@@ -62,13 +62,10 @@ runs:
         LD="${{ github.workspace }}/kernel/common/ld-wrapper" \
         HOSTLD="${{ github.workspace }}/kernel/common/ld-wrapper"
       else
-        tools/bazel info output_base
-        cp "${{ github.workspace }}/wild_gki.fragment" common/arch/arm64/configs/wild_gki.fragment
         if [[ ${{ inputs.version }} == "android16-6.12" ]]; then
           tools/bazel run \
             --config=fast \
             --config=stamp \
-            --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment \
             --disk_cache=/home/runner/.cache/bazel \
             //common:kernel_aarch64_dist \
             -- --destdir=/home/runner/out
@@ -76,15 +73,11 @@ runs:
           tools/bazel run \
             --config=fast \
             --config=stamp \
-            --defconfig_fragment=//common:arch/arm64/configs/wild_gki.fragment \
             --disk_cache=/home/runner/.cache/bazel \
             //common:kernel_aarch64_dist \
             -- --dist_dir=/home/runner/out
         fi
       fi
-
-      echo "Contents of /home/runner/out"
-      ls /home/runner/out
 
   - name: 'Gather Build Artifacts'
     shell: bash
