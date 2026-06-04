@@ -47,7 +47,7 @@ runs:
         OUT_DIR="/home/runner/out" \
         LTO=thin \
         BUILD_CONFIG=common/build.config.gki.aarch64 \
-        PRE_DEFCONFIG_CMDS="KCONFIG_CONFIG=\${ROOT_DIR}/common/arch/arm64/configs/gki_defconfig \${ROOT_DIR}/scripts/kconfig/merge_config.sh -m -r \${ROOT_DIR}/common/arch/arm64/configs/gki_defconfig \${ROOT_DIR}/common/arch/arm64/configs/wild_gki.fragment" \
+        PRE_DEFCONFIG_CMDS="KCONFIG_CONFIG=\${ROOT_DIR}/common/arch/arm64/configs/gki_defconfig \${ROOT_DIR}/common/scripts/kconfig/merge_config.sh -m -r \${ROOT_DIR}/common/arch/arm64/configs/gki_defconfig \${ROOT_DIR}/common/arch/arm64/configs/wild_gki.fragment" \
         build/build.sh -j"$(nproc)" \
         CC="/usr/bin/ccache clang" \
         CXX="/usr/bin/ccache clang+" \
