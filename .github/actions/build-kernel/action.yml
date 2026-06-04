@@ -42,6 +42,7 @@ runs:
     shell: bash
     working-directory: ${{ github.workspace }}/kernel
     run: |
+      cat common/arch/arm64/configs/gki_defconfig
       sed -i 's/check_defconfig//' ./common/build.config.gki
       if [ -f "build/build.sh" ]; then
         BUILD_GKI_ARTIFACTS= \
