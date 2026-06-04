@@ -35,14 +35,15 @@ runs:
       fi
 
   - name: Setup Kernel Configs
+    if: false
     uses: ./.github/actions/set-kernel-config
   
   - name: 'Build Kernel'
     shell: bash
     working-directory: ${{ github.workspace }}/kernel
     run: |
+      sed -i 's/check_defconfig//' ./common/build.config.gki
       if [ -f "build/build.sh" ]; then
-        sed -i 's/check_defconfig//' ./common/build.config.gki
         BUILD_GKI_ARTIFACTS= \
         BUILD_GKI_CERTIFICATION_TOOLS=0 \
         BUILD_SYSTEM_DLKM=0 \
