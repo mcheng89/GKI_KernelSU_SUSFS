@@ -38,7 +38,8 @@ runs:
         echo "BBG_COMMIT=$BBG_COMMIT" >> $GITHUB_ENV
 
     - name: Enable Kernel Configs
-      uses: ./.github/actions/set-kernel-config
-      with:
-        configs: |
-          CONFIG_BBG
+      shell: bash
+      run: |
+        cat >> "${{ github.workspace }}/wild_gki.fragment" << 'EOF'
+        CONFIG_BBG
+        EOF

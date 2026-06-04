@@ -15,7 +15,7 @@ runs:
       run: |
         set -euo pipefail
 
-        CONFIG_FILE="/home/runner/out/.config "
+        CONFIG_FILE="/home/runner/out/.config"
 
         # ensure config tool exists
         if [ ! -f common/scripts/config ]; then
