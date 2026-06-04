@@ -11,7 +11,7 @@ inputs:
 runs:
   using: composite
   steps:
-  - name: 'Build Kernel'
+  - name: 'Activate Bypass'
     shell: bash
     working-directory: ${{ github.workspace }}/kernel
     run: |
@@ -34,14 +34,19 @@ runs:
         echo "Bypass hack not applied as per input parameter."
       fi
 
+  - name: Setup Kernel Configs
+    uses: ./.github/actions/set-kernel-config
+  
+  - name: 'Build Kernel'
+    shell: bash
+    working-directory: ${{ github.workspace }}/kernel
+    run: |
       # Strip trailing empty lines from gki_defconfig to match savedefconfig output
       # (savedefconfig strips trailing newlines, causing check_defconfig to fail on 5.10.233+)
-      perl -pi -e 's/\n*\z/\n/' common/arch/arm64/configs/gki_defconfig
+      #perl -pi -e 's/\n*\z/\n/' common/arch/arm64/configs/gki_defconfig
 
       cp "${{ github.workspace }}/wild_gki.fragment" common/arch/arm64/configs/wild_gki.fragment
 
-      #cd ${{ github.workspace }}/kernel/common
-      #make O=/home/runner/out gki_defconfig AARCH=arm64
       if [ -f "build/build.sh" ]; then
         BUILD_GKI_ARTIFACTS= \
         BUILD_GKI_CERTIFICATION_TOOLS=0 \
@@ -52,7 +57,6 @@ runs:
         OUT_DIR="/home/runner/out" \
         LTO=thin \
         BUILD_CONFIG=common/build.config.gki.aarch64 \
-        PRE_DEFCONFIG_CMDS="KCONFIG_CONFIG=\${ROOT_DIR}/common/arch/arm64/configs/gki_defconfig \${ROOT_DIR}/common/scripts/kconfig/merge_config.sh -m -r \${ROOT_DIR}/common/arch/arm64/configs/gki_defconfig \${ROOT_DIR}/common/arch/arm64/configs/wild_gki.fragment" \
         build/build.sh -j"$(nproc)" \
         CC="/usr/bin/ccache clang" \
         CXX="/usr/bin/ccache clang+" \
