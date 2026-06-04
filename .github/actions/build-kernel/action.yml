@@ -13,7 +13,7 @@ runs:
   steps:
   - name: 'Build Kernel'
     shell: bash
-    working-directory: ${{ github.workspace }}/kernel/common
+    working-directory: ${{ github.workspace }}/kernel
     run: |
       set -euo pipefail
       if [ "${{ inputs.bypass }}" = "true" ]; then
@@ -33,8 +33,11 @@ runs:
       else
         echo "Bypass hack not applied as per input parameter."
       fi
-  
-      cd ${{ github.workspace }}/kernel
+
+      # Strip trailing empty lines from gki_defconfig to match savedefconfig output
+      # (savedefconfig strips trailing newlines, causing check_defconfig to fail on 5.10.233+)
+      perl -pi -e 's/\n*\z/\n/' common/arch/arm64/configs/gki_defconfig
+
       cp "${{ github.workspace }}/wild_gki.fragment" common/arch/arm64/configs/wild_gki.fragment
 
       if [ -f "build/build.sh" ]; then
