@@ -1,6 +1,9 @@
 name: 'Setup Networking Options'
 description: 'Set up kernel configuration fragment with required options'
 inputs:
+  version:
+    description: 'Kernel config version (e.g., android15-6.6)'
+    required: true
   kernel_version:
     description: 'Kernel version (e.g., 6.1)'
     required: true
@@ -79,3 +82,26 @@ runs:
         set -euo pipefail
         cp ${{ github.action_path }}/patches/bbrv3-android14-6.1.patch "${{ github.workspace }}/kernel/common/bbrv3-android14-6.1.patch"
         patch -p1 < bbrv3-android14-6.1.patch
+
+    - name: Apply NTSync Patch
+      if: false
+      shell: bash
+      working-directory: ${{ github.workspace }}/kernel/common
+      run: |
+        set -euo pipefail
+
+        echo "Using patch: $(basename $NTSYNC_PATCH)"
+        if [[ ${{ inputs.versi0n }} = "android16-6.12" ]}; then
+          echo "Removing pre-existing ntsync files for android16-6.12"
+          rm -f include/uapi/linux/ntsync.h
+          rm -f drivers/misc/ntsync.c
+        fi
+
+        cp ${{ github.workspace }}/kernel_patches/common/ntsync/ntsync_compat_${{ inputs.versi0n }}.patch ${{ github.workspace }}/kernel/common
+        patch -p1 ntsync_compat_${{ inputs.versi0n }}.patch
+        
+        cp ${{ github.workspace }}/kernel_patches/common/ntsync/ntsync_base.patch ${{ github.workspace }}/kernel/common
+        patch -p1 < ntsync_base.patch
+        cat >> "${{ github.workspace }}/kernel/common/arch/arm64/configs/gki_defconfig" << 'EOF'
+        CONFIG_NTSYNC=y
+        EOF
