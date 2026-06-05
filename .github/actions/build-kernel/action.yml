@@ -64,7 +64,9 @@ runs:
         HOSTLD="${{ github.workspace }}/kernel/common/ld-wrapper"
       else
         if [[ ${{ inputs.version }} == "android16-6.12" ]]; then
-          sed -i '/name = "kernel_aarch64",/a\    check_defconfig = "disabled",' common/BUILD.bazel
+          if [ "${{ inputs.bypass }}" = "false" ]; then
+            sed -i '/name = "kernel_aarch64",/a\    check_defconfig = "disabled",' common/BUILD.bazel
+          fi
           tools/bazel run \
             --config=fast \
             --config=stamp \
