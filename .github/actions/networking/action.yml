@@ -71,3 +71,11 @@ runs:
       if: inputs.kernel_version == '5.10'
       run: |
         sed -i 's/CONFIG_IP_SET_MAX/65534/g' net/netfilter/ipset/ip_set_core.c
+
+    - name: 'Apply BBRv3'
+      shell: bash
+      working-directory: ${{ github.workspace }}/kernel/common
+      run: |
+        set -euo pipefail
+        cp ${{ github.action_path }}/patches/bbrv3-android14-6.1.patch "${{ github.workspace }}/kernel/common/bbrv3-android14-6.1.patch"
+        patch -p1 < bbrv3-android14-6.1.patch
