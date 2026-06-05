@@ -82,7 +82,7 @@ runs:
         fi
       fi
 
-      cat /home/runner/out/common/.config
+      cat /home/runner/out/common/.config || true
 
   - name: 'Gather Build Artifacts'
     shell: bash
