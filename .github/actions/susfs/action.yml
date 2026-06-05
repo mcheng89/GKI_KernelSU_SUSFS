@@ -127,7 +127,7 @@ runs:
           echo "Applying namespace.c Android 13 5.15 Fake Patch"
           sed -i '/^#include <trace\/hooks\/blk.h>$/d' fs/namespace.c
         fi
-        if [ "${{ inputs.sublevel }}" -ge "207" ]; then
+        if [ "${{ inputs.sublevel }}" -ge "206" ]; then
           echo "Applying task_mmu.c Android 13 5.15 Fake Patch"
           sed -i '/^#include <trace\/hooks\/mm.h>$/d' fs/proc/task_mmu.c
         fi
@@ -261,7 +261,7 @@ runs:
           echo "Reverting namespace.c Android 13 5.15 Fake Patch"
           sed -i '/^#include "internal.h"$/a #include <trace/hooks/blk.h>' fs/namespace.c
         fi
-        if [ "${{ inputs.sublevel }}" -ge "207" ]; then
+        if [ "${{ inputs.sublevel }}" -ge "206" ]; then
           echo "Reverting task_mmu.c Android 13 5.15 Fake Patch"
           sed -i '/^#include <linux\/pkeys.h>$/a #include <trace/hooks/mm.h>' fs/proc/task_mmu.c
         fi
