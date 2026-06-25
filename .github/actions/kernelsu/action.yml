@@ -2,7 +2,7 @@ name: Setup Wild KSU
 description: Download and configure Wild KSU with version tracking
 inputs:
   ksu_branch:
-    description: 'KernelSU branch or commit (empty = latest dev branch tip)'
+    description: 'KernelSU branch or commit (empty = latest dev-susfs branch tip)'
     required: false
     default: ""
 
@@ -15,13 +15,14 @@ runs:
       run: |
         set -euo pipefail
 
+        KSU_REPO="https://github.com/pershoot/KernelSU-Next.git"
         KSU_INPUT="${{ inputs.ksu_branch }}"
         if [ -z "$KSU_INPUT" ]; then
-          KSU_INPUT="dev"
+          KSU_INPUT="dev-susfs"
         fi
 
         # Try as branch first, fall back to commit
-        if git ls-remote --heads https://github.com/KernelSU-Next/KernelSU-Next.git "$KSU_INPUT" | grep -q .; then
+        if git ls-remote --heads "$KSU_REPO" "$KSU_INPUT" | grep -q .; then
           echo "Using KernelSU-Next branch: $KSU_INPUT"
           curl -LSs "https://raw.githubusercontent.com/pershoot/KernelSU-Next/dev-susfs/kernel/setup.sh" | bash -s dev-susfs
           git -C KernelSU-Next/kernel fetch --depth=50 origin "$KSU_INPUT"

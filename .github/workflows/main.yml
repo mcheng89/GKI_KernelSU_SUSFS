@@ -45,7 +45,7 @@ on:
           - FULL
         default: FULL
       ksu_branch:
-        description: "KernelSU branch or commit (empty = latest dev branch tip)"
+        description: "KernelSU branch or commit (empty = latest dev-susfs branch tip)"
         type: string
         required: false
         default: ""
@@ -319,20 +319,21 @@ jobs:
       run: |
         set -euo pipefail
 
+        KSU_REPO="https://github.com/pershoot/KernelSU-Next.git"
         KSU_INPUT="${{ inputs.ksu_branch }}"
         if [ -z "$KSU_INPUT" ]; then
-          KSU_INPUT="dev"
+          KSU_INPUT="dev-susfs"
         fi
 
         # Try as branch first, fall back to commit
-        if git ls-remote --heads https://github.com/KernelSU-Next/KernelSU-Next.git "$KSU_INPUT" | grep -q .; then
+        if git ls-remote --heads "$KSU_REPO" "$KSU_INPUT" | grep -q .; then
           echo "Cloning KernelSU-Next from branch: $KSU_INPUT"
-          git clone --branch "$KSU_INPUT" https://github.com/KernelSU-Next/KernelSU-Next.git /tmp/kernelsu-next
+          git clone --branch "$KSU_INPUT" "$KSU_REPO" /tmp/kernelsu-next
           cd /tmp/kernelsu-next
           KSUN_COMMIT=$(git rev-parse HEAD)
         else
-          echo "Cloning KernelSU-Next from dev branch, then checking out commit: $KSU_INPUT"
-          git clone --branch dev https://github.com/KernelSU-Next/KernelSU-Next.git /tmp/kernelsu-next
+          echo "Cloning KernelSU-Next from dev-susfs branch, then checking out commit: $KSU_INPUT"
+          git clone --branch dev-susfs "$KSU_REPO" /tmp/kernelsu-next
           cd /tmp/kernelsu-next
           git fetch --depth=50 origin "$KSU_INPUT"
           git checkout "$KSU_INPUT"
@@ -345,11 +346,11 @@ jobs:
 
         KSU_GIT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "no-tag")
 
-        MANAGER_RUN_ID=$(curl -fsSL "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/actions/workflows/build-manager-ci.yml/runs?head_sha=${KSUN_COMMIT}" | jq -r '.workflow_runs[0].id // empty')
+        MANAGER_RUN_ID=$(curl -fsSL "https://api.github.com/repos/pershoot/KernelSU-Next/actions/workflows/build-manager-ci.yml/runs?head_sha=${KSUN_COMMIT}" | jq -r '.workflow_runs[0].id // empty')
         if [[ -n "${MANAGER_RUN_ID:-}" ]]; then
-          KSU_MANAGER="https://github.com/KernelSU-Next/KernelSU-Next/actions/runs/${MANAGER_RUN_ID}"
+          KSU_MANAGER="https://github.com/pershoot/KernelSU-Next/actions/runs/${MANAGER_RUN_ID}"
         else
-          KSU_MANAGER="https://github.com/KernelSU-Next/KernelSU-Next/actions/workflows/build-manager-ci.yml"
+          KSU_MANAGER="https://github.com/pershoot/KernelSU-Next/actions/workflows/build-manager-ci.yml"
         fi
 
         echo "Commits count: $COMMITS_COUNT"
@@ -501,20 +502,21 @@ jobs:
       run: |
         set -euo pipefail
 
+        KSU_REPO="https://github.com/pershoot/KernelSU-Next.git"
         KSU_INPUT="${{ inputs.ksu_branch }}"
         if [ -z "$KSU_INPUT" ]; then
-          KSU_INPUT="dev"
+          KSU_INPUT="dev-susfs"
         fi
 
         # Try as branch first, fall back to commit
-        if git ls-remote --heads https://github.com/KernelSU-Next/KernelSU-Next.git "$KSU_INPUT" | grep -q .; then
+        if git ls-remote --heads "$KSU_REPO" "$KSU_INPUT" | grep -q .; then
           echo "Cloning KernelSU-Next from branch: $KSU_INPUT"
-          git clone --branch "$KSU_INPUT" https://github.com/KernelSU-Next/KernelSU-Next.git /tmp/kernelsu-next
+          git clone --branch "$KSU_INPUT" "$KSU_REPO" /tmp/kernelsu-next
           cd /tmp/kernelsu-next
           KSUN_COMMIT=$(git rev-parse HEAD)
         else
-          echo "Cloning KernelSU-Next from dev branch, then checking out commit: $KSU_INPUT"
-          git clone --branch dev https://github.com/KernelSU-Next/KernelSU-Next.git /tmp/kernelsu-next
+          echo "Cloning KernelSU-Next from dev-susfs branch, then checking out commit: $KSU_INPUT"
+          git clone --branch dev-susfs "$KSU_REPO" /tmp/kernelsu-next
           cd /tmp/kernelsu-next
           git fetch --depth=50 origin "$KSU_INPUT"
           git checkout "$KSU_INPUT"
@@ -529,11 +531,11 @@ jobs:
         # Extract git tag
         KSU_GIT_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "no-tag")
 
-        MANAGER_RUN_ID=$(curl -fsSL "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/actions/workflows/build-manager-ci.yml/runs?head_sha=${KSUN_COMMIT}" | jq -r '.workflow_runs[0].id // empty')
+        MANAGER_RUN_ID=$(curl -fsSL "https://api.github.com/repos/pershoot/KernelSU-Next/actions/workflows/build-manager-ci.yml/runs?head_sha=${KSUN_COMMIT}" | jq -r '.workflow_runs[0].id // empty')
         if [[ -n "${MANAGER_RUN_ID:-}" ]]; then
-          KSU_MANAGER="https://github.com/KernelSU-Next/KernelSU-Next/actions/runs/${MANAGER_RUN_ID}"
+          KSU_MANAGER="https://github.com/pershoot/KernelSU-Next/actions/runs/${MANAGER_RUN_ID}"
         else
-          KSU_MANAGER="https://github.com/KernelSU-Next/KernelSU-Next/actions/workflows/build-manager-ci.yml"
+          KSU_MANAGER="https://github.com/pershoot/KernelSU-Next/actions/workflows/build-manager-ci.yml"
         fi
 
         echo "Commits count: $COMMITS_COUNT"

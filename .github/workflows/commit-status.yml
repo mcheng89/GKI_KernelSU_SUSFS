@@ -39,11 +39,11 @@ jobs:
           }
 
           github_latest_commit() {
-            curl -fsSL "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/commits/dev" | jq -r '.sha'
+            curl -fsSL "https://api.github.com/repos/pershoot/KernelSU-Next/commits/dev-susfs" | jq -r '.sha'
           }
 
           github_latest_message() {
-            curl -fsSL "https://api.github.com/repos/KernelSU-Next/KernelSU-Next/commits/dev" | jq -r '.commit.message | split("\n")[0]'
+            curl -fsSL "https://api.github.com/repos/pershoot/KernelSU-Next/commits/dev-susfs" | jq -r '.commit.message | split("\n")[0]'
           }
 
           {
@@ -89,4 +89,4 @@ jobs:
           latest_kernelsu_message="$(github_latest_message)"
           latest_kernelsu_message="$(sanitize_cell "$latest_kernelsu_message")"
 
-          printf '| %s | %s | %s |\n' "dev" "$latest_kernelsu_commit" "$latest_kernelsu_message" >> "$summary_file"
+          printf '| %s | %s | %s |\n' "dev-susfs" "$latest_kernelsu_commit" "$latest_kernelsu_message" >> "$summary_file"
