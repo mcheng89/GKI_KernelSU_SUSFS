@@ -27,9 +27,6 @@ on:
       feature_set:
         required: true
         type: string
-      use_repo:
-        required: false
-        type: boolean
       use_latest_commits:
         required: false
         type: boolean
@@ -82,7 +79,6 @@ jobs:
         android_version: ${{ inputs.android_version }}
         kernel_version: ${{ inputs.kernel_version }}
         os_patch_level: ${{ inputs.os_patch_level }}
-        use_repo: ${{ inputs.use_repo }}
 
     - name: Set Build Timestamp from Kernel Commit
       shell: bash
