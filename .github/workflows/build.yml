@@ -27,10 +27,14 @@ on:
       feature_set:
         required: true
         type: string
-      use_latest_commits:
+      ksu_branch:
         required: false
-        type: boolean
-        default: true
+        type: string
+        default: ""
+      susfs_commit:
+        required: false
+        type: string
+        default: ""
 
 jobs:
   build-gki:
@@ -130,13 +134,13 @@ jobs:
       if: contains(inputs.feature_set, 'KSUN') || inputs.feature_set == 'FULL'
       uses: ./.github/actions/kernelsu
       with:
-        use_latest_commits: ${{ inputs.use_latest_commits }}
+        ksu_branch: ${{ inputs.ksu_branch }}
 
     - name: SUSFS
       if: contains(inputs.feature_set, 'SUSFS') || inputs.feature_set == 'FULL'
       uses: ./.github/actions/susfs
       with:
-        use_latest_commits: ${{ inputs.use_latest_commits }}
+        susfs_commit: ${{ inputs.susfs_commit }}
         version: ${{ inputs.version }}
         android_version: ${{ inputs.android_version }}
         kernel_version: ${{ inputs.kernel_version }}
