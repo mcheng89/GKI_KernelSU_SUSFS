@@ -55,6 +55,31 @@ runs:
           echo "Kernel >= $MIN_VERSION, skipping ptrace patch"
         fi
 
+    - name: Apply Unicode Fix Patch
+      shell: bash
+      if: true
+      working-directory: ${{ github.workspace }}/kernel/common
+      run: |
+        set -euo pipefail
+        KERNEL_VERSION="${{ env.KERNEL_VER }}"
+        MIN_VERSION="5.16"
+        
+        echo "Patching unicode!"
+        if [ "$(printf '%s\n' "$KERNEL_VERSION" "$MIN_VERSION" | sort -V | head -n1)" = "$KERNEL_VERSION" ]; then
+            patch -p1 --forward < "${{ github.workspace }}/kernel_patches/common/unicode_bypass_fix_6.1-.patch"
+        else
+            patch -p1 --forward < "${{ github.workspace }}/kernel_patches/common/unicode_bypass_fix_6.1+.patch"
+        fi
+
+    - name: Apply Other Patches
+      shell: bash
+      if: true
+      working-directory: ${{ github.workspace }}/kernel/common
+      run: |
+        set -euo pipefail
+        KERNEL_VERSION="${{ inputs.kernel_version }}"
+        MIN_VERSION="5.16"
+        
         patch -p1 --forward < "${{ github.workspace }}/kernel_patches/common/optimized_mem_operations.patch"
         patch -p1 --forward < "${{ github.workspace }}/kernel_patches/common/file_struct_8bytes_align.patch"
         patch -p1 --forward < "${{ github.workspace }}/kernel_patches/common/reduce_cache_pressure.patch"
