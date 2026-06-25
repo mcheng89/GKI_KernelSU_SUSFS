@@ -40,9 +40,8 @@ runs:
           CONFIG_CIFS_XATTR=y
           CONFIG_CIFS_POSIX=y
 
-    - name: Apply Other Patches
+    - name: Apply Ptrace Patch
       shell: bash
-      if: true
       working-directory: ${{ github.workspace }}/kernel/common
       run: |
         set -euo pipefail
@@ -57,7 +56,6 @@ runs:
 
     - name: Apply Unicode Fix Patch
       shell: bash
-      if: true
       working-directory: ${{ github.workspace }}/kernel/common
       run: |
         set -euo pipefail
