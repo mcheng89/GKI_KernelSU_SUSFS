@@ -59,7 +59,7 @@ runs:
       working-directory: ${{ github.workspace }}/kernel/common
       run: |
         set -euo pipefail
-        KERNEL_VERSION="${{ env.KERNEL_VER }}"
+        KERNEL_VERSION="${{ inputs.kernel_version }}"
         MIN_VERSION="5.16"
         
         echo "Patching unicode!"
