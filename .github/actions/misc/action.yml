@@ -71,7 +71,7 @@ runs:
 
     - name: Apply Other Patches
       shell: bash
-      if: true
+      if: false
       working-directory: ${{ github.workspace }}/kernel/common
       run: |
         set -euo pipefail
