@@ -40,6 +40,28 @@ runs:
           CONFIG_CIFS_XATTR=y
           CONFIG_CIFS_POSIX=y
 
+    - name: Apply NTSync Patch
+      shell: bash
+      working-directory: ${{ github.workspace }}/kernel/common
+      run: |
+        set -euo pipefail
+
+        echo "Using patch: $(basename $NTSYNC_PATCH)"
+        if [[ ${{ inputs.version }} = "android16-6.12" ]]; then
+          echo "Removing pre-existing ntsync files for android16-6.12"
+          rm -f include/uapi/linux/ntsync.h
+          rm -f drivers/misc/ntsync.c
+        fi
+
+        cp ${{ github.workspace }}/kernel_patches/common/ntsync/ntsync_compat_${{ inputs.version }}.patch ${{ github.workspace }}/kernel/common
+        patch -p1 ntsync_compat_${{ inputs.version }}.patch
+        
+        cp ${{ github.workspace }}/kernel_patches/common/ntsync/ntsync_base.patch ${{ github.workspace }}/kernel/common
+        patch -p1 < ntsync_base.patch
+        cat >> "${{ github.workspace }}/kernel/common/arch/arm64/configs/gki_defconfig" << 'EOF'
+        CONFIG_NTSYNC=y
+        EOF
+
     - name: Apply Ptrace Patch
       shell: bash
       working-directory: ${{ github.workspace }}/kernel/common
@@ -71,7 +93,7 @@ runs:
 
     - name: Apply Other Patches
       shell: bash
-      if: false
+      if: true
       working-directory: ${{ github.workspace }}/kernel/common
       run: |
         set -euo pipefail
@@ -106,7 +128,7 @@ runs:
         fi
         
         echo "Patching add_limitation_scaling_min_freq.patch"
-        sed 's/unsigned long val/unsigned int val/' "${{ github.workspace }}/kernel_patches/common/add_limitation_scaling_min_freq.patch" | patch -p1 -F3 --forward
+        patch -p1 -F3 --forward < "${{ github.workspace }}/kernel_patches/common/add_limitation_scaling_min_freq.patch"
         echo "Patching re_write_limitation_scaling_min_freq.patch"
         patch -p1 -F3 --forward < "${{ github.workspace }}/kernel_patches/common/re_write_limitation_scaling_min_freq.patch"
         echo "Patching adjust_cpu_scan_order.patch"
