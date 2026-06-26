@@ -373,15 +373,6 @@ jobs:
           gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/${id}" || true
         done
 
-  release-preview:
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-    permissions:
-      contents: read
-
-    env:
-      GH_TOKEN: ${{ github.token }}
-      RELEASE_NOTES: .github/config/RELEASE_NOTES.md
     steps:
     - name: Checkout code
       uses: actions/checkout@v5
