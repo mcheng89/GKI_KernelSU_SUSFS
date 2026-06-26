@@ -84,10 +84,6 @@ on:
         type: string
         required: false
         default: ""
-      test_release_notes:
-        description: "Test release notes only"
-        type: boolean
-        default: false
 
 jobs:
   prepare-ccache:
@@ -289,7 +285,7 @@ jobs:
     if: ${{ !inputs.test_release_notes && always() }}
     runs-on: ubuntu-latest
     permissions:
-      actions: read
+      actions: write
       contents: read
     needs:
     - build-android12-5-10
@@ -311,22 +307,36 @@ jobs:
     - name: 📋 Workflow Build Summary
       run: |
         {
-          echo "# 📋 Workflow Build Summary"
+          echo "# 📋 Build Summary — $(date -u '+%Y-%m-%d %H:%M UTC')"
           echo
           echo "**Feature Set:** ${{ inputs.feature_set }}"
           echo "**KSU Branch:** ${{ inputs.ksu_branch || 'latest dev' }}"
-          echo "**SUSFS Commits:**"
-          echo "- android12-5.10: ${{ inputs.susfs_commit_android12-5-10 || 'latest' }}"
-          echo "- android13-5.10: ${{ inputs.susfs_commit_android13-5-10 || 'latest' }}"
-          echo "- android13-5.15: ${{ inputs.susfs_commit_android13-5-15 || 'latest' }}"
-          echo "- android14-5.15: ${{ inputs.susfs_commit_android14-5-15 || 'latest' }}"
-          echo "- android14-6.1: ${{ inputs.susfs_commit_android14-6-1 || 'latest' }}"
-          echo "- android15-6.6: ${{ inputs.susfs_commit_android15-6-6 || 'latest' }}"
-          echo "- android16-6.12: ${{ inputs.susfs_commit_android16-6-12 || 'latest' }}"
+          echo
+          
+          # Count successes and failures
+          SUCCESS_COUNT=0
+          FAIL_COUNT=0
+          
+          # Sort summaries so they appear in a consistent order
+          for f in ./summaries/*.md; do
+            [ -f "$f" ] || continue
+            if grep -q "✅ Success" "$f"; then
+              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            else
+              FAIL_COUNT=$((FAIL_COUNT + 1))
+            fi
+          done
+          
+          TOTAL=$((SUCCESS_COUNT + FAIL_COUNT))
+          echo "**Results:** ${SUCCESS_COUNT}/${TOTAL} succeeded"
+          if [ "$FAIL_COUNT" -gt 0 ]; then
+            echo "  - ❌ ${FAIL_COUNT} failed"
+          fi
           echo
           echo "---"
           echo
-          # Sort summaries so they appear in a consistent order
+          
+          # Output each summary
           for f in ./summaries/*.md; do
             [ -f "$f" ] || continue
             cat "$f"
@@ -334,15 +344,38 @@ jobs:
             echo "---"
             echo
           done
+          
+          echo
+          echo "> **SUSFS Commits:**"
+          echo "> - android12-5.10: ${{ inputs.susfs_commit_android12-5-10 || 'latest' }}"
+          echo "> - android13-5.10: ${{ inputs.susfs_commit_android13-5-10 || 'latest' }}"
+          echo "> - android13-5.15: ${{ inputs.susfs_commit_android13-5-15 || 'latest' }}"
+          echo "> - android14-5.15: ${{ inputs.susfs_commit_android14-5-15 || 'latest' }}"
+          echo "> - android14-6.1: ${{ inputs.susfs_commit_android14-6-1 || 'latest' }}"
+          echo "> - android15-6.6: ${{ inputs.susfs_commit_android15-6-6 || 'latest' }}"
+          echo "> - android16-6.12: ${{ inputs.susfs_commit_android16-6-12 || 'latest' }}"
         } >> "$GITHUB_STEP_SUMMARY"
 
     - name: 🧹 Cleanup Summary Files
       if: ${{ always() }}
       run: rm -rf ./summaries
 
+    - name: 🧹 Delete Summary Artifacts
+      if: ${{ always() }}
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        # Delete all *-Summary artifacts from this run since they're now consolidated
+        RUN_ID="${{ github.run_id }}"
+        ARTIFACTS=$(gh api "repos/${{ github.repository }}/actions/runs/${RUN_ID}/artifacts" --jq '.artifacts[] | select(.name | endswith("-Summary")) | .id')
+        for id in $ARTIFACTS; do
+          echo "Deleting summary artifact id=$id"
+          gh api -X DELETE "repos/${{ github.repository }}/actions/artifacts/${id}" || true
+        done
+
   release-preview:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'workflow_dispatch' && inputs.test_release_notes == true }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     permissions:
       contents: read
 
