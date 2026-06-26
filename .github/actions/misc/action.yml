@@ -134,6 +134,17 @@ runs:
         echo "Patching adjust_cpu_scan_order.patch"
         patch -p1 -F3 --forward < "${{ github.workspace }}/kernel_patches/common/adjust_cpu_scan_order.patch"
         echo "Patching avoid_extra_s2idle_wake_attempts.patch"
+        FILE="drivers/base/power/wakeup.c"
+        # Check if the function exists
+        if grep -q "^void pm_system_wakeup(void)" "$FILE"; then
+            # Check if the line exists inside the function
+            if sed -n '/^void pm_system_wakeup(void)/,/^}/p' "$FILE" | grep -q 'suspend_abort_fs_sync();'; then
+                # Remove the line
+                sed -i '/^void pm_system_wakeup(void)/,/^}/{
+                    /suspend_abort_fs_sync();/d
+                }' "$FILE"
+            fi
+        fi
         patch -p1 -F3 --forward < "${{ github.workspace }}/kernel_patches/common/avoid_extra_s2idle_wake_attempts.patch"
         echo "Patching disable_cache_hot_buddy.patch"
         patch -p1 -F3 --forward < "${{ github.workspace }}/kernel_patches/common/disable_cache_hot_buddy.patch"
