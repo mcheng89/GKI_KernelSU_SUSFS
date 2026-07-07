@@ -139,12 +139,13 @@ runs:
           CONFIG_NETWORK_FILESYSTEMS=y
           CONFIG_NETFS_SUPPORT=y
           CONFIG_KEYS=y
-          CONFIG_CIFS_XATTR=y
+          CONFIG_CIFS_XATTR=ys
           CONFIG_CIFS_POSIX=y
    
     - name: Fix CIFS on android16-6.12
       shell: bash
       working-directory: ${{ github.workspace }}/kernel/common
-      if: inputs.version == "android16-6.12"
       run: |
-        sed -i '/"fs\/netfs\/netfs\.ko",/d' modules.bzl
+        if [[ ${{ inputs.version }} == "android16-6.12" ]]; then
+          sed -i '/"fs\/netfs\/netfs\.ko",/d' modules.bzl
+        fi
