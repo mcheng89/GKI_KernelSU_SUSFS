@@ -141,3 +141,37 @@ runs:
 
         echo "Kernel common commit date: $COMMIT_DATE"
         echo "Kernel common commit msg: $COMMIT_MSG"
+
+    - name: Detect kernel prebuilts
+      shell: bash
+      working-directory: ${{ github.workspace }}/kernel
+      run: |
+        set -euo pipefail
+        KROOT="${{ github.workspace }}/kernel"
+        if [ -f "$KROOT/tools/mkbootimg/mkbootimg.py" ]; then
+          echo "Found kernel mkbootimg, exporting MKBOOTIMG"
+          echo "MKBOOTIMG=$KROOT/tools/mkbootimg/mkbootimg.py" >> $GITHUB_ENV
+        fi
+        if [ -f "$KROOT/prebuilts/kernel-build-tools/linux-x86/bin/avbtool" ]; then
+          echo "Found kernel avbtool, exporting AVBTOOL"
+          echo "AVBTOOL=$KROOT/prebuilts/kernel-build-tools/linux-x86/bin/avbtool" >> $GITHUB_ENV
+        fi
+        if [ -f "$KROOT/prebuilts/kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem" ]; then
+          echo "Found kernel boot sign key, exporting BOOT_SIGN_KEY_PATH"
+          echo "BOOT_SIGN_KEY_PATH=$KROOT/prebuilts/kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem" >> $GITHUB_ENV
+        fi
+        # Fail the step if any required prebuilts are missing
+        MISSING=()
+        if [ -z "${MKBOOTIMG:-}" ] && [ ! -f "$KROOT/tools/mkbootimg/mkbootimg.py" ]; then
+          MISSING+=(mkbootimg)
+        fi
+        if [ -z "${AVBTOOL:-}" ] && [ ! -f "$KROOT/prebuilts/kernel-build-tools/linux-x86/bin/avbtool" ]; then
+          MISSING+=(avbtool)
+        fi
+        if [ ! -f "$KROOT/prebuilts/kernel-build-tools/linux-x86/share/avb/testkey_rsa2048.pem" ]; then
+          MISSING+=(boot_sign_key)
+        fi
+        if [ ${#MISSING[@]} -ne 0 ]; then
+          echo "ERROR: Required kernel prebuilts not found: ${MISSING[*]}" >&2
+          exit 1
+        fi

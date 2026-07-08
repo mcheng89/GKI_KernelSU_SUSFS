@@ -98,8 +98,8 @@ runs:
           echo "Kernel Version:"
           strings "/home/runner/out/dist/Image" | grep -m1 "^Linux version "
         fi
-          exit 0
-        fi
+        exit 0
+      fi
       if [ -f "/home/runner/out/Image" ]; then
         echo "Found Image at /home/runner/out/Image"
         if [[ ${{ inputs.bypass }} == "true" ]]; then
@@ -120,4 +120,89 @@ runs:
       set -euo pipefail
       cp ${{ github.action_path }}/patches/bypass.patch "${{ github.workspace }}/AnyKernel3/bypass.patch"
       patch -p1 < bypass.patch
+
+  - name: 'Create Bootimgs Folder and Copy Images for Android 14/15'
+    shell: bash
+    working-directory: ${{ github.workspace }}
+    run: |
+      set -euo pipefail
+      # Determine build mode name based on bypass input
+      if [[ "${{ inputs.bypass }}" == "true" ]]; then
+        MODE="Bypass"
+      else
+        MODE="Normal"
+      fi
+      ANDROID_PART="$(echo "${{ inputs.version }}" | cut -d- -f1)"
+      if [[ "$ANDROID_PART" != "android14" && "$ANDROID_PART" != "android15" ]]; then
+        echo "Not android14/15; skipping bootimgs creation."
+        exit 0
+      fi
+      mkdir -p "${{ github.workspace }}/bootimgs-${MODE}"
+      if [ -f "/home/runner/out/dist/Image" ]; then
+        SRC_IMG="/home/runner/out/dist/Image"
+      elif [ -f "/home/runner/out/Image" ]; then
+        SRC_IMG="/home/runner/out/Image"
+      else
+        echo "ERROR: No Image found for bootimgs creation (${MODE}); cannot continue." >&2
+        exit 1
+      fi
+
+      cp "$SRC_IMG" "${{ github.workspace }}/bootimgs-${MODE}/Image"
+      cp "$SRC_IMG" "${{ github.workspace }}/bootimgs-${MODE}/${MODE}-Image"
+      cp "${SRC_IMG}.lz4" "${{ github.workspace }}/bootimgs-${MODE}/Image.lz4"
+      cp "${SRC_IMG}.lz4" "${{ github.workspace }}/bootimgs-${MODE}/${MODE}-Image.lz4"
+
+      # Generate gzip for workspace Image
+      gzip -n -k -f -9 "${{ github.workspace }}/bootimgs-${MODE}/Image" > "${{ github.workspace }}//bootimgs-${MODE}/Image.gz"
+      gzip -n -k -f -9 "${{ github.workspace }}/bootimgs-${MODE}/${MODE}-Image" > "${{ github.workspace }}//bootimgs-${MODE}/${MODE}-Image.gz"
+
+  - name: 'Android 13/14/15 boot image build script'
+    shell: bash
+    working-directory: ${{ github.workspace }}
+    run: |
+      set -euo pipefail
+      # Determine mode (Normal/Bypass)
+      if [[ "${{ inputs.bypass }}" == "true" ]]; then
+        MODE="Bypass"
+      else
+        MODE="Normal"
+      fi
+      ANDROID_PART="$(echo "${{ inputs.version }}" | cut -d- -f1)"
+      if [[ "$ANDROID_PART" != "android13" && "$ANDROID_PART" != "android14" && "$ANDROID_PART" != "android15" ]]; then
+        echo "Not android13/14/15; skipping boot image creation."
+        exit 0
+      fi
+
+      # Require `BOOT_SIGN_KEY_PATH` to be set to a filesystem path by download-kernel
+      if [ -z "${BOOT_SIGN_KEY_PATH:-}" ] || [ ! -f "$BOOT_SIGN_KEY_PATH" ]; then
+        echo "ERROR: BOOT_SIGN_KEY_PATH not set or not a file; cannot sign boot image for $MODE" >&2
+        exit 1
+      fi
+
+      if [ ! -d "${{ github.workspace }}/bootimgs-${MODE}" ]; then
+        echo "bootimgs-${MODE} not found; cannot build boot.img" >&2
+        exit 1
+      fi
+
+      MKBOOTIMG_PATH="${MKBOOTIMG:-$(command -v mkbootimg 2>/dev/null || true)}"
+      AVBTOOL_PATH="${AVBTOOL:-$(command -v avbtool 2>/dev/null || true)}"
+      if [ -z "$MKBOOTIMG_PATH" ]; then
+        echo "ERROR: mkbootimg not found; cannot create boot image for $MODE" >&2
+        exit 1
+      fi
+      if [ -z "$AVBTOOL_PATH" ]; then
+        echo "ERROR: avbtool not found; cannot sign boot image for $MODE" >&2
+        exit 1
+      fi
+
+      pushd "${{ github.workspace }}/bootimgs-${MODE}" >/dev/null
+      "$MKBOOTIMG_PATH" --header_version 4 --kernel Image --output boot.img
+      "$AVBTOOL_PATH" add_hash_footer \
+        --partition_name boot \
+        --partition_size $((64 * 1024 * 1024)) \
+        --image boot.img \
+        --algorithm SHA256_RSA2048 \
+        --key "$BOOT_SIGN_KEY_PATH"
+      cp ./boot.img ./${MODE}-boot.img
+      popd >/dev/null
 

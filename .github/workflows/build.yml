@@ -73,8 +73,7 @@ jobs:
 
     - name: Setup Build Environment
       uses: ./.github/actions/setup-build-environment
-      env:
-        BOOT_SIGN_KEY: ${{ secrets.BOOT_SIGN_KEY }}
+      
           
     - name: Download Kernel Repository
       uses: ./.github/actions/download-kernel
@@ -453,5 +452,22 @@ jobs:
       with:
         name: ${{ steps.extract.outputs.file_name }}-AnyKernel3
         path: ${{ github.workspace }}/AnyKernel3/**
+        if-no-files-found: ignore
+        compression-level: 9
+
+    - name: Extra Artifacts
+      if: ${{ always() }}
+      uses: actions/upload-artifact@v7
+      with:
+        name: ${{ steps.extract.outputs.file_name }}-Misc
+        path: |
+          ${{ github.workspace }}/bootimgs-Normal/Normal-Image
+          ${{ github.workspace }}/bootimgs-Normal/Normal-Image.lz4
+          ${{ github.workspace }}/bootimgs-Normal/Normal-Image.gz
+          ${{ github.workspace }}/bootimgs-Normal/Normal-boot.img
+          ${{ github.workspace }}/bootimgs-Bypass/Bypass-Image
+          ${{ github.workspace }}/bootimgs-Bypass/Bypass-Image.lz4
+          ${{ github.workspace }}/bootimgs-Bypass/Bypass-Image.gz
+          ${{ github.workspace }}/bootimgs-Bypass/Bypass-boot.img
         if-no-files-found: ignore
         compression-level: 9
