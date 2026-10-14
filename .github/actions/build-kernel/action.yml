@@ -175,14 +175,22 @@ runs:
           exit 0
         fi
         mkdir -p "${{ github.workspace }}/bootimgs-${MODE}"
-        if [ -f "/home/runner/out/dist/Image" ]; then
-          SRC_IMG="/home/runner/out/dist/Image"
-        elif [ -f "/home/runner/out/Image" ]; then
-          SRC_IMG="/home/runner/out/Image"
-        else
+        SRC_IMG=""
+        for candidate in \
+          "${{ github.workspace }}/kernel/bazel-bin/common/kernel_aarch64/Image" \
+          "${{ github.workspace }}/bazel-bin/common/kernel_aarch64/Image" \
+          "/home/runner/out/dist/Image" \
+          "/home/runner/out/Image"; do
+          if [ -f "$candidate" ]; then
+            SRC_IMG="$candidate"
+            break
+          fi
+        done
+        if [ -z "$SRC_IMG" ]; then
           echo "ERROR: No Image found for bootimgs creation (${MODE}); cannot continue." >&2
           exit 1
         fi
+        echo "Using Image source: $SRC_IMG"
         cp "$SRC_IMG" "${{ github.workspace }}/bootimgs-${MODE}/Image"
         cp "$SRC_IMG" "${{ github.workspace }}/bootimgs-${MODE}/${MODE}-Image"
         cp "${SRC_IMG}.lz4" "${{ github.workspace }}/bootimgs-${MODE}/Image.lz4"
